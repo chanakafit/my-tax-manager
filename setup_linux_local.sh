@@ -63,13 +63,20 @@ echo "========================================"
 echo "Starting Post-Install Script"
 echo "========================================"
 
-# Check if vendor directory exists
-if [ -d "vendor" ]; then
-    echo "✓ Vendor directory already exists, checking if update needed..."
-    # Check if composer.lock is newer than vendor
-    if [ -f "composer.lock" ] && [ "composer.lock" -nt "vendor" ]; then
-        echo "composer.lock is newer than vendor, running composer install..."
+# Check if vendor directory exists and has content (autoload.php is the key file)
+if [ -d "vendor" ] && [ -f "vendor/autoload.php" ]; then
+    echo "✓ Vendor directory already exists with dependencies"
+
+    # Check if composer.lock is newer than vendor, indicating updates are needed
+    if [ -f "composer.lock" ] && [ "composer.lock" -nt "vendor/autoload.php" ]; then
+        echo "composer.lock is newer than vendor, updating dependencies..."
         composer install --optimize-autoloader --no-interaction --prefer-dist
+        if [ $? -eq 0 ]; then
+            echo "✓ Composer update completed successfully"
+        else
+            echo "❌ Composer update failed"
+            exit 1
+        fi
     else
         echo "✓ Vendor is up to date"
     fi
