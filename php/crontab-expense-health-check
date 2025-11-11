@@ -1,0 +1,23 @@
+# Expense Health Check Cron Jobs
+
+# Generate expense health check suggestions on the 1st of each month at 1:00 AM
+0 1 1 * * cd /path/to/your/project && php php/yii expense-health-check/generate >> /path/to/logs/expense-health-check.log 2>&1
+
+# Alternative: If using Docker
+# 0 1 1 * * cd /path/to/your/project && docker-compose -f local/docker-compose.yml exec -T php php /app/yii expense-health-check/generate >> /path/to/logs/expense-health-check.log 2>&1
+
+# Optional: Clean up old temporary ignores weekly (every Sunday at 2:00 AM)
+0 2 * * 0 cd /path/to/your/project && php php/yii expense-health-check/cleanup >> /path/to/logs/expense-health-check-cleanup.log 2>&1
+
+# To install this crontab:
+# 1. Edit this file and replace /path/to/your/project with the actual path
+# 2. Run: crontab -e
+# 3. Add the lines above
+# 4. Save and exit
+
+# To view current crontab:
+# crontab -l
+
+# To remove crontab:
+# crontab -r
+

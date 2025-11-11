@@ -1,0 +1,7 @@
+# Crontab for Yii2 application
+# Add your scheduled tasks here
+# Example: Run a console command every day at midnight
+# 0 0 * * * cd /var/www/html && php yii example/command
+
+# Empty crontab - add your scheduled tasks as needed
+
