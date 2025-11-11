@@ -300,7 +300,7 @@ class Person extends \Faker\Provider\Person
      *
      * @return string
      *
-     * @example 12345678
+     * @example admin123
      */
     public function driverLicence()
     {
@@ -312,7 +312,7 @@ class Person extends \Faker\Provider\Person
      *
      * @return string
      *
-     * @example 12345678
+     * @example admin123
      */
     public function passportNumber()
     {

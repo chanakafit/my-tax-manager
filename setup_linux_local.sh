@@ -171,7 +171,7 @@ if docker compose -p mb exec php php yii migrate/up --interactive=0; then
     echo "Default admin user created:"
     echo "  Username: admin"
     echo "  Email: admin@example.com"
-    echo "  Password: 12345678"
+    echo "  Password: admin123"
     echo "========================================"
 else
     echo "⚠️  Warning: Database migrations failed"

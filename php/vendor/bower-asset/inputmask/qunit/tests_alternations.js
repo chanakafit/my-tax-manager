@@ -764,7 +764,7 @@ export default function (qunit, Inputmask) {
   );
 
   qunit.test(
-    "Optional parts not working as expected - type 12345678 - #2710",
+    "Optional parts not working as expected - type admin123 - #2710",
     function (assert) {
       var $fixture = $("#qunit-fixture");
       $fixture.append('<input type="text" id="testmask" />');
@@ -775,7 +775,7 @@ export default function (qunit, Inputmask) {
         clearIncomplete: true
       }).mask(testmask);
       testmask.focus();
-      $("#testmask").Type("12345678");
+      $("#testmask").Type("admin123");
       testmask.blur();
       assert.equal(testmask.value, "", "Result " + testmask.value);
     }

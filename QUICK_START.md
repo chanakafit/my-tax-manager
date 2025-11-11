@@ -25,7 +25,7 @@ docker logs -f mb-php
 http://localhost
 ```
 
-**Login:** admin / 12345678
+**Login:** admin / admin123
 
 ---
 
@@ -183,7 +183,7 @@ See [SETUP_SCRIPT_FIX.md](SETUP_SCRIPT_FIX.md) for details.
 **Admin User:**
 - Username: `admin`
 - Email: `admin@example.com`
-- Password: `12345678`
+- Password: `admin123`
 
 ⚠️ **Change password immediately after first login!**
 

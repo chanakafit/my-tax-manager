@@ -14,3 +14,4 @@ logs
 **/config/db-local.php
 **/config/mail-local.php
 
+/php/vendor/
