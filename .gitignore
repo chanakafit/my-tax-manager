@@ -1,0 +1,16 @@
+# phpstorm project files
+.idea
+
+# logs
+logs
+
+/local/mariadb/
+/logs/
+.env
+/php/.env
+/php/web/uploads/
+
+# Sensitive configuration files
+**/config/db-local.php
+**/config/mail-local.php
+

@@ -1,7 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="WEB_MODULE" version="4">
   <component name="NewModuleRootManager">
-    <content url="file://$MODULE_DIR$" />
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/.idea/dataSources" />
+      <excludeFolder url="file://$MODULE_DIR$/logs/php" />
+      <excludeFolder url="file://$MODULE_DIR$/php/runtime/cache" />
+      <excludeFolder url="file://$MODULE_DIR$/php/runtime/debug" />
+      <excludeFolder url="file://$MODULE_DIR$/php/runtime/logs" />
+      <excludeFolder url="file://$MODULE_DIR$/php/runtime/tax-return-export-2024-1762800064" />
+      <excludeFolder url="file://$MODULE_DIR$/php/runtime/tax-return-export-2024-1762801668" />
+      <excludeFolder url="file://$MODULE_DIR$/php/runtime/tax-return-export-2024-1762802005" />
+      <excludeFolder url="file://$MODULE_DIR$/php/web/assets/445d4a44" />
+      <excludeFolder url="file://$MODULE_DIR$/php/web/assets/46f43374" />
+      <excludeFolder url="file://$MODULE_DIR$/php/web/assets/4ad793f1" />
+      <excludeFolder url="file://$MODULE_DIR$/php/web/assets/4e7bb732" />
+      <excludeFolder url="file://$MODULE_DIR$/php/web/assets/4f6678ac" />
+      <excludeFolder url="file://$MODULE_DIR$/php/web/assets/5183b6e4" />
+      <excludeFolder url="file://$MODULE_DIR$/php/web/assets/528acb08" />
+      <excludeFolder url="file://$MODULE_DIR$/php/web/assets/54a02a09" />
+      <excludeFolder url="file://$MODULE_DIR$/php/web/assets/6ecaeb3b" />
+      <excludeFolder url="file://$MODULE_DIR$/php/web/assets/796df3ce" />
+      <excludeFolder url="file://$MODULE_DIR$/php/web/assets/8bc5d3ee" />
+      <excludeFolder url="file://$MODULE_DIR$/php/web/assets/9003814b" />
+      <excludeFolder url="file://$MODULE_DIR$/php/web/assets/997cc9c2" />
+      <excludeFolder url="file://$MODULE_DIR$/php/web/assets/a8c42703" />
+      <excludeFolder url="file://$MODULE_DIR$/php/web/assets/abb0be8f" />
+      <excludeFolder url="file://$MODULE_DIR$/php/web/assets/c46e5ade" />
+      <excludeFolder url="file://$MODULE_DIR$/php/web/assets/c8fd1b0d" />
+      <excludeFolder url="file://$MODULE_DIR$/php/web/assets/eb0cb738" />
+    </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
