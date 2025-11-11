@@ -9,19 +9,10 @@ echo "========================================"
 # Create .env file if it doesn't exist
 if [ ! -f ".env" ]; then
     echo "Creating .env file in root directory..."
-    cp -f local/.env.example .env
+    cp -f .env.example .env
     echo "✓ .env file created"
 else
     echo "✓ .env file already exists"
-fi
-
-# Also create .env in php directory for compatibility
-if [ ! -f "php/.env" ]; then
-    echo "Creating .env file in php directory..."
-    cp -f local/.env.example php/.env
-    echo "✓ php/.env file created"
-else
-    echo "✓ php/.env file already exists"
 fi
 
 # Create db-local.php from environment variables
@@ -59,6 +50,47 @@ return [
 ];
 EOF
 echo "✓ Mail configuration created"
+
+# Create post_install.sh if it doesn't exist
+if [ ! -f "php/post_install.sh" ]; then
+    echo "Creating post_install.sh..."
+    cat > php/post_install.sh << 'EOFSCRIPT'
+#!/bin/bash
+
+set -e  # Exit on error
+
+echo "========================================"
+echo "Starting Post-Install Script"
+echo "========================================"
+
+# Check if vendor directory exists
+if [ -d "vendor" ]; then
+    echo "✓ Vendor directory already exists, checking if update needed..."
+    # Check if composer.lock is newer than vendor
+    if [ -f "composer.lock" ] && [ "composer.lock" -nt "vendor" ]; then
+        echo "composer.lock is newer than vendor, running composer install..."
+        composer install --optimize-autoloader --no-interaction --prefer-dist
+    else
+        echo "✓ Vendor is up to date"
+    fi
+else
+    echo "Running composer install..."
+    composer install --optimize-autoloader --no-interaction --prefer-dist
+    if [ $? -eq 0 ]; then
+        echo "✓ Composer install completed successfully"
+    else
+        echo "❌ Composer install failed"
+        exit 1
+    fi
+fi
+
+echo ""
+echo "========================================"
+echo "Post-Install Script Completed"
+echo "========================================"
+EOFSCRIPT
+    echo "✓ post_install.sh created"
+fi
 
 # Make post_install.sh executable
 if [ -f "php/post_install.sh" ]; then
@@ -98,7 +130,7 @@ fi
 # Start services
 echo ""
 echo "Starting Docker containers..."
-cd local && docker compose -p mb up -d --build
+docker compose -p mb up -d --build
 cd ..
 
 # Wait for MariaDB to be ready

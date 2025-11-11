@@ -35,4 +35,4 @@ COPY ./php/crontab /etc/crontabs/root
 
 HEALTHCHECK CMD ["php-fpm", "-t"]
 
-CMD ["/bin/bash", "-c", "cd /var/www/html/; ./post_install.sh; crond; php-fpm;"]
+CMD ["/bin/bash", "-c", "cd /var/www/html/; chmod +x post_install.sh 2>/dev/null || true; ./post_install.sh && crond && php-fpm"]
