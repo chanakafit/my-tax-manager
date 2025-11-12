@@ -5,14 +5,13 @@
 logs
 
 /local/mariadb/
-/logs/
+
 .env
 /php/.env
 /php/web/uploads/
 
-# Sensitive configuration files
-**/config/db-local.php
-**/config/mail-local.php
-
 /php/vendor/
 /mariadb/
+/php/config/db-local.php
+/php/config/mail-local.php
+/logs/
