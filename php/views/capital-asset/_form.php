@@ -44,7 +44,7 @@ use kartik\date\DatePicker;
                     <?= $form->field($model, 'purchase_cost')->textInput(['type' => 'number', 'step' => '0.01']) ?>
 
                     <?= $form->field($model, 'initial_tax_year')->dropDownList(
-                        array_combine(range(date('Y')-3, date('Y')), range(date('Y')-3, date('Y'))),
+                        array_combine(range(date('Y')-5, date('Y')), range(date('Y')-5, date('Y'))),
                         ['prompt' => 'Select Tax Year']
                     ) ?>
                 </div>
