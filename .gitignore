@@ -5,10 +5,13 @@
 logs
 
 /local/mariadb/
-/logs/
+
 .env
 /php/.env
 /php/web/uploads/
 
 /php/vendor/
 /mariadb/
+/php/config/db-local.php
+/php/config/mail-local.php
+/logs/
