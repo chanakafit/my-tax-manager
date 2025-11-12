@@ -53,7 +53,13 @@ My Tax Manager is a Yii2-based web application designed for small to medium busi
   - Dashboard alerts for missing expenses
   - Temporary or permanent ignore options
   - Auto-reset when patterns resume
-- **Automated Cron Jobs**: Schedule expense health checks and other maintenance tasks
+- **Paysheet Health Check**: Automatically generate missing monthly salary paysheets
+  - Scans all active employees each month
+  - Auto-generates paysheet suggestions with calculated salaries
+  - Dashboard review and approval workflow
+  - Edit amounts before approval
+  - Approve to create actual paysheets
+- **Automated Cron Jobs**: Schedule health checks and maintenance tasks
 
 ### Reporting & Export
 - **Excel Exports**: Invoices, paysheets, tax returns with PHPSpreadsheet
@@ -219,6 +225,79 @@ docker logs -f mb-php
 - Tracks: category, vendor, suggested month, pattern months, average amount
 - Status: pending, added, ignored_temporary, ignored_permanent
 - Audit: created_by, updated_by, actioned_by, timestamps
+
+### Paysheet Health Check System
+
+**Purpose**: Automatically generate and alert on missing monthly employee salary paysheets
+
+**How It Works:**
+
+1. **Automatic Generation**
+   - Scans all active employees (not left the company)
+   - Checks if paysheet exists for each month
+   - Auto-generates salary paysheet suggestions based on:
+     - Employee payroll details (if configured)
+     - Last paysheet data (if available)
+     - Default values (as fallback)
+   - Only suggests for current and past months (never future)
+
+2. **Dashboard Widget**
+   - Shows pending paysheet count with badge
+   - Top 5 pending paysheets displayed
+   - Employee name, position, month, basic salary, net salary
+   - Quick action buttons: Approve, Edit, Reject, Delete
+
+3. **User Actions**
+   - **Approve**: Creates actual paysheet from suggestion (status: pending)
+   - **Edit**: Modify salary amounts, allowances, deductions, tax before approval
+   - **Reject**: Mark suggestion as rejected with optional reason
+   - **Delete**: Remove suggestion entirely (pending or rejected only)
+   - **View History**: See all approved/rejected suggestions
+
+4. **Salary Calculation**
+   - Basic Salary: From employee payroll details or last paysheet
+   - Allowances: Additional benefits (overtime, bonuses, etc.)
+   - Deductions: EPF, ETF, or other deductions
+   - Tax Amount: Calculated based on tax configuration and category
+   - Net Salary: Basic + Allowances - Deductions - Tax
+
+5. **Console Commands**
+   ```bash
+   # Generate for current month
+   docker exec mb-php php /var/www/html/yii paysheet-health-check/generate
+   
+   # Generate for past 6 months
+   docker exec mb-php php /var/www/html/yii paysheet-health-check/generate-all 6
+   
+   # Generate for specific month
+   docker exec mb-php php /var/www/html/yii paysheet-health-check/generate-for-month 2025-11
+   
+   # Check pending count
+   docker exec mb-php php /var/www/html/yii paysheet-health-check/count
+   
+   # Cleanup old rejected suggestions (90 days)
+   docker exec mb-php php /var/www/html/yii paysheet-health-check/cleanup 90
+   ```
+
+6. **Cron Automation**
+   ```bash
+   # Add to crontab (runs 1st of each month at 2 AM)
+   0 2 1 * * docker exec mb-php php /var/www/html/yii paysheet-health-check/generate >> /var/log/paysheet-health-check.log 2>&1
+   ```
+
+**Database Schema:**
+- Table: `mb_paysheet_suggestion`
+- Tracks: employee, suggested month, basic salary, allowances, deductions, tax, net salary
+- Status: pending, approved, rejected
+- Audit: created_by, updated_by, actioned_by, generated_at, timestamps
+
+**Workflow:**
+1. System generates suggestions automatically (via cron)
+2. User reviews on dashboard or paysheet-suggestion page
+3. User can edit amounts if needed
+4. User approves → Creates actual paysheet
+5. User rejects → Marks as rejected (can be deleted later)
+6. Approved suggestions link to created paysheets
 
 ### Bank Statement Upload & ZIP Export
 

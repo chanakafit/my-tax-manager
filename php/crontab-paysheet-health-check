@@ -1,0 +1,29 @@
+# Paysheet Health Check Cron Jobs
+
+# Generate paysheet health check suggestions on the 1st of each month at 2:00 AM
+0 2 1 * * cd /var/www/html && php yii paysheet-health-check/generate >> /var/www/html/runtime/logs/paysheet-health-check.log 2>&1
+
+# Alternative: If using Docker from host
+# 0 2 1 * * cd /path/to/your/project && docker compose -p mb exec -T php php yii paysheet-health-check/generate >> logs/paysheet-health-check.log 2>&1
+
+# Optional: Clean up old rejected suggestions quarterly (1st of Jan, Apr, Jul, Oct at 3:00 AM)
+0 3 1 1,4,7,10 * cd /var/www/html && php yii paysheet-health-check/cleanup >> /var/www/html/runtime/logs/paysheet-health-check-cleanup.log 2>&1
+
+# To install this crontab (inside the Docker container):
+# 1. Copy this file content
+# 2. Run: docker compose -p mb exec php bash
+# 3. Run: crontab -e
+# 4. Paste the cron entries above
+# 5. Save and exit
+
+# To view current crontab:
+# crontab -l
+
+# To remove crontab:
+# crontab -r
+
+# Note: Make sure the PHP container has cron installed
+# You can add cron to the Dockerfile or run it manually:
+# apt-get update && apt-get install -y cron
+# service cron start
+

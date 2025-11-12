@@ -2,6 +2,7 @@
 
 use app\models\FinancialTransaction;
 use app\widgets\ExpenseHealthCheckWidget;
+use app\widgets\PaysheetHealthCheckWidget;
 use yii\helpers\Html;
 use kartik\grid\GridView;
 use miloschuman\highcharts\Highcharts;
@@ -37,6 +38,13 @@ $this->params['breadcrumbs'][] = $this->title;
     <div class="row mb-4">
         <div class="col-md-12">
             <?= ExpenseHealthCheckWidget::widget(['showDetails' => true, 'limit' => 5]) ?>
+        </div>
+    </div>
+
+    <!-- Paysheet Health Check Widget -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <?= PaysheetHealthCheckWidget::widget(['showDetails' => true, 'limit' => 5]) ?>
         </div>
     </div>
 
