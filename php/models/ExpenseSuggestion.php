@@ -171,10 +171,10 @@ class ExpenseSuggestion extends BaseModel
     public function getStatusLabel()
     {
         $labels = [
-            self::STATUS_PENDING => '<span class="badge badge-warning">Pending Review</span>',
-            self::STATUS_ADDED => '<span class="badge badge-success">Added</span>',
-            self::STATUS_IGNORED_TEMPORARY => '<span class="badge badge-secondary">Ignored (Temp)</span>',
-            self::STATUS_IGNORED_PERMANENT => '<span class="badge badge-dark">Ignored (Permanent)</span>',
+            self::STATUS_PENDING => '<span class="label label-warning" style="background-color: #f0ad4e; color: #000; padding: 6px 12px; border-radius: 3px; font-weight: bold; display: inline-block;">Pending Review</span>',
+            self::STATUS_ADDED => '<span class="label label-success" style="background-color: #5cb85c; color: #fff; padding: 6px 12px; border-radius: 3px; font-weight: bold; display: inline-block;">Added</span>',
+            self::STATUS_IGNORED_TEMPORARY => '<span class="label label-default" style="background-color: #999; color: #fff; padding: 6px 12px; border-radius: 3px; font-weight: bold; display: inline-block;">Ignored (Temp)</span>',
+            self::STATUS_IGNORED_PERMANENT => '<span class="label label-default" style="background-color: #333; color: #fff; padding: 6px 12px; border-radius: 3px; font-weight: bold; display: inline-block;">Ignored (Permanent)</span>',
         ];
         return $labels[$this->status] ?? $this->status;
     }

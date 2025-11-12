@@ -8,6 +8,7 @@ use yii\web\JsExpression;
 
 /** @var yii\web\View $this */
 /** @var yii\data\ActiveDataProvider $dataProvider */
+/** @var string $currentStatus */
 
 $this->title = 'Expense Health Check - Suggestions';
 $this->params['breadcrumbs'][] = $this->title;
@@ -111,13 +112,33 @@ $(document).on('click', '.btn-ignore-suggestion', function(e) {
         </div>
     </div>
 
-    <div class="alert alert-info">
-        <strong>Active Suggestions:</strong> This page shows pending and added suggestions only.
-        Ignored suggestions are shown in a <?= Html::a('separate list', ['ignored'], ['class' => 'alert-link']) ?> to avoid confusion.
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="alert alert-info">
+                <strong>Active Suggestions:</strong> This page shows pending and added suggestions only.
+                Ignored suggestions are shown in a <?= Html::a('separate list', ['ignored'], ['class' => 'alert-link']) ?> to avoid confusion.
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <label for="status-filter">Filter by Status:</label>
+            <?= Html::dropDownList('status-filter', $currentStatus, [
+                ExpenseSuggestion::STATUS_PENDING => 'Pending Only',
+                ExpenseSuggestion::STATUS_ADDED => 'Added Only',
+                'all' => 'All (Pending + Added)',
+            ], [
+                'id' => 'status-filter',
+                'class' => 'form-control',
+                'onchange' => 'window.location.href = "' . Url::to(['expense-suggestion/index']) . '?status=" + this.value',
+            ]) ?>
+        </div>
     </div>
 
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
+        'filterModel' => false,
         'panel' => [
             'heading' => '<h3 class="panel-title"><i class="fas fa-heartbeat"></i> Expense Suggestions</h3>',
             'type' => 'primary',
@@ -129,10 +150,7 @@ $(document).on('click', '.btn-ignore-suggestion', function(e) {
                 'value' => function ($model) {
                     return $model->getStatusLabel();
                 },
-                'filter' => [
-                    ExpenseSuggestion::STATUS_PENDING => 'Pending',
-                    ExpenseSuggestion::STATUS_ADDED => 'Added',
-                ],
+                'label' => 'Status',
             ],
             [
                 'attribute' => 'suggested_month',

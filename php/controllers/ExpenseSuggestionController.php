@@ -42,17 +42,27 @@ class ExpenseSuggestionController extends BaseController
      */
     public function actionIndex()
     {
+        $status = Yii::$app->request->get('status', ExpenseSuggestion::STATUS_PENDING);
+
+        $query = ExpenseSuggestion::find()
+            ->with(['expenseCategory', 'vendor', 'lastExpense'])
+            ->where(['IN', 'status', [
+                ExpenseSuggestion::STATUS_PENDING,
+                ExpenseSuggestion::STATUS_ADDED
+            ]]);
+
+        // Apply status filter if specified (and not 'all')
+        if ($status && $status !== 'all' && in_array($status, [ExpenseSuggestion::STATUS_PENDING, ExpenseSuggestion::STATUS_ADDED])) {
+            $query->andWhere(['status' => $status]);
+        }
+
+        $query->orderBy([
+            'status' => SORT_ASC,
+            'suggested_month' => SORT_DESC,
+        ]);
+
         $dataProvider = new ActiveDataProvider([
-            'query' => ExpenseSuggestion::find()
-                ->with(['expenseCategory', 'vendor', 'lastExpense'])
-                ->where(['IN', 'status', [
-                    ExpenseSuggestion::STATUS_PENDING,
-                    ExpenseSuggestion::STATUS_ADDED
-                ]])
-                ->orderBy([
-                    'status' => SORT_ASC,
-                    'suggested_month' => SORT_DESC,
-                ]),
+            'query' => $query,
             'pagination' => [
                 'pageSize' => 20,
             ],
@@ -70,6 +80,7 @@ class ExpenseSuggestionController extends BaseController
 
         return $this->render('index', [
             'dataProvider' => $dataProvider,
+            'currentStatus' => $status,
         ]);
     }
 
