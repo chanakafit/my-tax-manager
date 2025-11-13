@@ -40,43 +40,57 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
     echo Nav::widget([
             'options' => ['class' => 'navbar-nav'],
             'items' => [
-                    ['label' => 'Home', 'url' => ['/site/index']],
+                    ['label' => 'Dashboard', 'url' => ['/site/dashboard']],
                     [
                         'label' => 'Sales',
                         'items' => [
                             ['label' => 'Invoices', 'url' => ['/invoice/index']],
                             ['label' => 'Customers', 'url' => ['/customer/index']],
+                            ['label' => 'Payment Terms', 'url' => ['/payment-term/index']],
                         ]
                     ],
                     [
                         'label' => 'Expenses',
                         'items' => [
-                            ['label' => 'Expenses', 'url' => ['/expense/index']],
+                            ['label' => 'All Expenses', 'url' => ['/expense/index']],
+                            [
+                                'label' => 'Expense Suggestions <span class="badge bg-warning text-dark ms-1" id="expense-suggestions-badge" style="display:none;">0</span>',
+                                'url' => ['/expense-suggestion/index'],
+                                'encode' => false,
+                            ],
                             ['label' => 'Categories', 'url' => ['/expense-category/index']],
                             ['label' => 'Vendors', 'url' => ['/vendor/index']],
                         ]
                     ],
                     [
-                        'label' => 'Assets',
+                        'label' => 'Assets & Banking',
                         'items' => [
                             ['label' => 'Capital Assets', 'url' => ['/capital-asset/index']],
-                            ['label' => 'Bank Accounts', 'url' => ['/bank-account/index']],
-                            ['label' => 'Transactions', 'url' => ['/financial-transaction/index']],
+                            ['label' => 'Liabilities', 'url' => ['/liability/index']],
+                            '<div class="dropdown-divider"></div>',
+                            ['label' => 'Owner Bank Accounts', 'url' => ['/owner-bank-account/index']],
+                            ['label' => 'Business Bank Accounts', 'url' => ['/bank-account/index']],
+                            ['label' => 'Financial Transactions', 'url' => ['/financial-transaction/index']],
                         ]
                     ],
                     [
-                        'label' => 'HR',
+                        'label' => 'HR & Payroll',
                         'items' => [
                             ['label' => 'Employees', 'url' => ['/employee/index']],
                             ['label' => 'Paysheets', 'url' => ['/paysheet/index']],
+                            ['label' => 'Paysheet Suggestions', 'url' => ['/paysheet-suggestion/index']],
+                            '<div class="dropdown-divider"></div>',
+                            ['label' => 'Calculate Paysheets', 'url' => ['/paysheet/calculate']],
                         ]
                     ],
                     [
-                        'label' => 'Tax',
+                        'label' => 'Tax & Compliance',
                         'items' => [
-                            ['label' => 'Tax Years', 'url' => ['/tax-year/index']],
+                            ['label' => 'Tax Years Overview', 'url' => ['/tax-year/index']],
                             ['label' => 'Tax Records', 'url' => ['/tax-record/index']],
-                            ['label' => 'Tax Returns', 'url' => ['/tax-return/list']],
+                            '<div class="dropdown-divider"></div>',
+                            ['label' => 'Tax Return Submissions', 'url' => ['/tax-return/list']],
+                            ['label' => 'Prepare Tax Return', 'url' => ['/tax-return/index']],
                         ]
                     ],
                     Yii::$app->user->isGuest
@@ -113,6 +127,32 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
         </div>
     </div>
 </footer>
+
+<?php if (!Yii::$app->user->isGuest): ?>
+<script>
+// Update expense suggestions badge
+function updateExpenseSuggestionsBadge() {
+    fetch('<?= \yii\helpers\Url::to(['/expense-suggestion/get-pending-suggestions']) ?>')
+        .then(response => response.json())
+        .then(data => {
+            const badge = document.getElementById('expense-suggestions-badge');
+            if (badge && data.count > 0) {
+                badge.textContent = data.count;
+                badge.style.display = 'inline-block';
+                badge.classList.add('bg-warning', 'text-dark');
+            }
+        })
+        .catch(error => console.error('Error fetching expense suggestions:', error));
+}
+
+// Update on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateExpenseSuggestionsBadge();
+    // Update every 5 minutes
+    setInterval(updateExpenseSuggestionsBadge, 300000);
+});
+</script>
+<?php endif; ?>
 
 <?php $this->endBody() ?>
 </body>
