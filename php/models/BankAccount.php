@@ -46,14 +46,12 @@ class BankAccount extends BaseModel
             [['branch_name', 'swift_code', 'notes'], 'default', 'value' => null],
             [['currency'], 'default', 'value' => 'USD'],
             [['is_active'], 'default', 'value' => 1],
-            [['account_holder_type'], 'default', 'value' => 'business'],
             [['account_name', 'account_number', 'bank_name', 'account_type'], 'required'],
             [['is_active'], 'integer'],
             [['notes'], 'string'],
-            [['account_name', 'account_number', 'bank_name', 'branch_name', 'swift_code', 'account_type', 'account_holder_type'], 'string', 'max' => 255],
+            [['account_name', 'account_number', 'bank_name', 'branch_name', 'swift_code', 'account_type'], 'string', 'max' => 255],
             [['currency'], 'string', 'max' => 3],
             [['account_number'], 'unique'],
-            [['account_holder_type'], 'in', 'range' => ['business', 'personal']],
         ];
     }
 
@@ -70,7 +68,6 @@ class BankAccount extends BaseModel
             'branch_name' => 'Branch Name',
             'swift_code' => 'Swift Code',
             'account_type' => 'Account Type',
-            'account_holder_type' => 'Account Holder Type',
             'currency' => 'Currency',
             'is_active' => 'Is Active',
             'notes' => 'Notes',

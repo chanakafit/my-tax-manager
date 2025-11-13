@@ -34,14 +34,6 @@ use app\widgets\BActiveForm as ActiveForm;
         'class' => 'form-control'
     ]) ?>
 
-    <?= $form->field($model, 'account_holder_type')->dropDownList([
-        'business' => 'Business Account',
-        'personal' => 'Personal Account',
-    ], [
-        'prompt' => 'Select Account Holder Type',
-        'class' => 'form-control'
-    ]) ?>
-
     <?= $form->field($model, 'currency')->textInput(['maxlength' => true]) ?>
 
 <?= $form->field($model, 'is_active')->dropDownList([

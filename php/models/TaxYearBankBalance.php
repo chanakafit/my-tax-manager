@@ -17,7 +17,7 @@ use Yii;
  * @property int $updated_at
  *
  * @property TaxYearSnapshot $taxYearSnapshot
- * @property BankAccount $bankAccount
+ * @property OwnerBankAccount $bankAccount
  */
 class TaxYearBankBalance extends BaseModel
 {
