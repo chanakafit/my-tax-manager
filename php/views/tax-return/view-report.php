@@ -318,7 +318,7 @@ $this->params['breadcrumbs'][] = 'Report';
                         <?php $profitLoss = ($asset->disposal_value ?? 0) - $asset->purchase_cost; ?>
                         <tr>
                             <td><?= Html::encode($asset->asset_name) ?></td>
-                            <td><span class="badge bg-<?= $asset->asset_type == 'business' ? 'primary' : 'info' ?>"><?= ucfirst($asset->asset_type) ?></span></td>
+                            <td><span class="badge bg-<?= $asset->asset_type == 'business' ? 'primary' : 'info' ?>"><?= ucfirst($asset->asset_type ?? '') ?></span></td>
                             <td><?= ucfirst($asset->asset_category ?? 'N/A') ?></td>
                             <td class="text-end"><?= Yii::$app->formatter->asCurrency($asset->purchase_cost, 'LKR') ?></td>
                             <td><?= $asset->disposal_date ?></td>
@@ -352,6 +352,9 @@ $this->params['breadcrumbs'][] = 'Report';
                         $totalBusiness = 0;
                         foreach ($data['bankBalances'] as $balance):
                             $account = $balance->bankAccount;
+                            if (!$account) {
+                                continue; // Skip if account not found
+                            }
                             if ($account->account_holder_type == 'personal') {
                                 $totalPersonal += $balance->balance_lkr;
                             } else {
@@ -362,12 +365,20 @@ $this->params['breadcrumbs'][] = 'Report';
                             <td><?= Html::encode($account->bank_name) ?></td>
                             <td><?= Html::encode($account->account_name) ?></td>
                             <td><?= Html::encode($account->account_number) ?></td>
-                            <td><span class="badge bg-<?= $account->account_holder_type == 'business' ? 'primary' : 'info' ?>"><?= ucfirst($account->account_holder_type) ?></span></td>
+                            <td><span class="badge bg-<?= $account->account_holder_type == 'business' ? 'primary' : 'info' ?>"><?= ucfirst($account->account_holder_type ?? '') ?></span></td>
                             <td class="text-end"><?= Yii::$app->formatter->asCurrency($balance->balance_lkr, 'LKR') ?></td>
                         </tr>
                         <?php endforeach; ?>
                         <?php if (empty($data['bankBalances'])): ?>
-                        <tr><td colspan="5" class="text-center text-muted">No bank balances recorded</td></tr>
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">
+                                <div class="py-3">
+                                    <i class="fas fa-exclamation-circle"></i> No bank balances recorded for this tax year.
+                                    <br>
+                                    <?= Html::a('Click here to add bank balances', ['manage-balances', 'year' => $year], ['class' => 'btn btn-sm btn-primary mt-2']) ?>
+                                </div>
+                            </td>
+                        </tr>
                         <?php endif; ?>
                     </tbody>
                     <tfoot class="table-secondary">
@@ -401,7 +412,7 @@ $this->params['breadcrumbs'][] = 'Report';
                         <?php foreach ($data['personalLiabilitiesExisting'] as $liability): ?>
                         <tr>
                             <td><?= Html::encode($liability->lender_name) ?></td>
-                            <td><?= ucfirst($liability->liability_category) ?></td>
+                            <td><?= ucfirst($liability->liability_category ?? '') ?></td>
                             <td><?= $liability->start_date ?></td>
                             <td class="text-end"><?= Yii::$app->formatter->asCurrency($liability->original_amount, 'LKR') ?></td>
                             <td class="text-end">
@@ -425,7 +436,7 @@ $this->params['breadcrumbs'][] = 'Report';
                         <?php foreach ($data['personalLiabilitiesStarted'] as $liability): ?>
                         <tr>
                             <td><?= Html::encode($liability->lender_name) ?></td>
-                            <td><?= ucfirst($liability->liability_category) ?></td>
+                            <td><?= ucfirst($liability->liability_category ?? '') ?></td>
                             <td><?= $liability->start_date ?></td>
                             <td class="text-end"><?= Yii::$app->formatter->asCurrency($liability->original_amount, 'LKR') ?></td>
                             <td class="text-end">
@@ -459,7 +470,7 @@ $this->params['breadcrumbs'][] = 'Report';
                             <?php foreach ($data['businessLiabilitiesExisting'] as $liability): ?>
                             <tr>
                                 <td><?= Html::encode($liability->lender_name) ?></td>
-                                <td><?= ucfirst($liability->liability_category) ?></td>
+                                <td><?= ucfirst($liability->liability_category ?? '') ?></td>
                                 <td><?= $liability->start_date ?></td>
                                 <td class="text-end"><?= Yii::$app->formatter->asCurrency($liability->original_amount, 'LKR') ?></td>
                                 <td class="text-end">
@@ -483,7 +494,7 @@ $this->params['breadcrumbs'][] = 'Report';
                             <?php foreach ($data['businessLiabilitiesStarted'] as $liability): ?>
                             <tr>
                                 <td><?= Html::encode($liability->lender_name) ?></td>
-                                <td><?= ucfirst($liability->liability_category) ?></td>
+                                <td><?= ucfirst($liability->liability_category ?? '') ?></td>
                                 <td><?= $liability->start_date ?></td>
                                 <td class="text-end"><?= Yii::$app->formatter->asCurrency($liability->original_amount, 'LKR') ?></td>
                                 <td class="text-end">

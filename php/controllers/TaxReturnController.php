@@ -72,11 +72,48 @@ class TaxReturnController extends BaseController
             return $this->redirect(['index', 'year' => $year]);
         }
 
-        // Get all owner bank accounts
+        // Calculate tax year end date
+        $taxYearEnd = ($year + 1) . '-03-31';
+
+        // Get all owner bank accounts that were active
         $bankAccounts = OwnerBankAccount::find()->where(['is_active' => 1])->all();
 
-        // Get all active liabilities
-        $liabilities = Liability::find()->where(['status' => Liability::STATUS_ACTIVE])->all();
+        // Get liabilities that were active at the end of the tax year
+        // This includes liabilities that:
+        // 1. Started on or before the tax year end date
+        // 2. Either still active OR settled after the tax year end date
+        $liabilities = Liability::find()
+            ->where(['<=', 'start_date', $taxYearEnd])
+            ->andWhere([
+                'or',
+                ['status' => Liability::STATUS_ACTIVE],
+                ['and',
+                    ['status' => Liability::STATUS_SETTLED],
+                    ['>', 'settlement_date', $taxYearEnd]
+                ],
+                ['and',
+                    ['status' => Liability::STATUS_SETTLED],
+                    ['settlement_date' => null]
+                ]
+            ])
+            ->all();
+
+        // Get capital assets acquired before the end of the tax year and not disposed
+        $capitalAssets = CapitalAsset::find()
+            ->where(['<=', 'purchase_date', $taxYearEnd])
+            ->andWhere([
+                'or',
+                ['status' => 'active'],
+                ['and',
+                    ['status' => 'disposed'],
+                    ['>', 'disposal_date', $taxYearEnd]
+                ],
+                ['and',
+                    ['status' => 'disposed'],
+                    ['disposal_date' => null]
+                ]
+            ])
+            ->all();
 
         // Load existing balances
         $existingBankBalances = ArrayHelper::index($snapshot->bankBalances, 'bank_account_id');
@@ -150,8 +187,10 @@ class TaxReturnController extends BaseController
         return $this->render('manage-balances', [
             'snapshot' => $snapshot,
             'year' => $year,
+            'taxYearEnd' => $taxYearEnd,
             'bankAccounts' => $bankAccounts,
             'liabilities' => $liabilities,
+            'capitalAssets' => $capitalAssets,
             'existingBankBalances' => $existingBankBalances,
             'existingLiabilityBalances' => $existingLiabilityBalances,
         ]);
