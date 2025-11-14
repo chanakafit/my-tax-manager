@@ -18,18 +18,18 @@ class ExpenseController extends BaseController
     public function actionIndex(): string
     {
         $searchModel = new ExpenseSearch();
-        $dataProvider = new ActiveDataProvider([
-            'query' => Expense::find()
-                ->with(['expenseCategory']),
-            'pagination' => [
-                'pageSize' => 50
-            ],
-            'sort' => [
-                'defaultOrder' => [
-                    'expense_date' => SORT_DESC,
-                ]
-            ],
-        ]);
+        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
+
+        // Configure the data provider
+        $dataProvider->query->with(['expenseCategory', 'vendor']);
+        $dataProvider->pagination = [
+            'pageSize' => 50
+        ];
+        $dataProvider->sort = [
+            'defaultOrder' => [
+                'expense_date' => SORT_DESC,
+            ]
+        ];
 
         return $this->render('index', [
             'searchModel' => $searchModel,
