@@ -48,15 +48,18 @@ php/tests/
   - Active employee queries
   - Cleanup operations
 
-### Models (140+ tests)
+### Models (185+ tests)
 - **ExpenseSuggestion** (16 tests) - Status workflow, pattern handling
 - **PaysheetSuggestion** (17 tests) - Approval workflow, permissions
 - **Expense** (14 tests) - Validation, currency conversion
 - **Invoice** (17 tests) - Amount calculations, status management
+- **InvoiceItem** (14 tests) - Line item calculations, tax per item
 - **TaxYearSnapshot** (11 tests) - Tax year management
+- **TaxYearBankBalance** (13 tests) - Year-end balances, currency conversion
 - **Paysheet** (13 tests) - Salary calculations
 - **Employee** (13 tests) - NIC/phone validation
 - **BankAccount** (13 tests) - Account management
+- **CapitalAsset** (18 tests) - Asset lifecycle, depreciation rules
 - **FinancialTransaction** (20 tests) - Transaction types, constants
 - **Vendor** (4 tests) - Basic model validation
 - **Customer** (4 tests) - Basic model validation

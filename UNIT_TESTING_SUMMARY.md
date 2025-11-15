@@ -225,15 +225,50 @@
 - Attribute labels
 - Expenses relationship
 
+**TaxYearBankBalance (13 tests)**
+- Model instantiation and validation
+- Required fields (tax_year_snapshot_id, bank_account_id, balance, balance_lkr)
+- Balance and balance_lkr numeric validation
+- Supporting document optional with max length
+- File upload validation (PDF, PNG, JPG, max 10MB)
+- Relationships (taxYearSnapshot, bankAccount)
+- Balance conversion calculations (exchange rate implied)
+- Integer field validations
+
+**CapitalAsset (18 tests)**
+- Model instantiation and validation
+- Required fields (asset_name, purchase_date, purchase_cost, initial_tax_year, asset_category)
+- Status validation (active/disposed)
+- Asset type validation (business/personal)
+- Asset category validation (immovable/movable)
+- Purchase cost validation
+- calculateAllowance method for business vs personal assets
+- Written down value defaults to purchase cost
+- Initial tax year format (4 characters)
+- Optional fields validation
+- Relationships (allowances)
+
+**InvoiceItem (14 tests)**
+- Model instantiation and validation
+- Required fields (invoice_id, item_name, quantity, unit_price, total_amount)
+- Default values (discount = 0.00)
+- Total amount calculation: (quantity × unit_price) + tax - discount
+- Tax calculation per line item
+- Simple total calculation without tax/discount
+- Quantity and unit price validation
+- Optional fields validation
+- Item name max length (255)
+- Relationships (invoice)
+
 ---
 
 ## Test Coverage Summary
 
-### Total Tests Created: 150+
+### Total Tests Created: 195+
 
 **By Category:**
 - Service/Component Tests: 29
-- Model Tests: 121+
+- Model Tests: 166+
 
 **By Type:**
 - Instantiation tests
