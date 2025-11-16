@@ -21,7 +21,7 @@ class ExpenseSuggestionTest extends Unit
     public function testModelInstantiation()
     {
         $model = new ExpenseSuggestion();
-        verify($model)->isInstanceOf(ExpenseSuggestion::class);
+        verify($model)->instanceOf(ExpenseSuggestion::class);
     }
 
     /**
@@ -77,7 +77,7 @@ class ExpenseSuggestionTest extends Unit
         $result = $model->getPatternMonthsArray();
         
         verify($result)->isArray();
-        verify($result)->isEmpty();
+        verify(empty($result))->true();
     }
 
     /**
@@ -99,6 +99,11 @@ class ExpenseSuggestionTest extends Unit
      */
     public function testMarkAsAdded()
     {
+        // Mock user login for BlameableBehavior
+        $user = new \app\models\User();
+        $user->id = 1;
+        \Yii::$app->user->login($user);
+
         $model = new ExpenseSuggestion();
         $model->expense_category_id = 1;
         $model->vendor_id = 1;
@@ -106,7 +111,11 @@ class ExpenseSuggestionTest extends Unit
         $model->pattern_months = json_encode(['2024-01-01']);
         $model->generated_at = time();
         $model->status = ExpenseSuggestion::STATUS_PENDING;
-        
+        $model->created_by = 1;
+        $model->updated_by = 1;
+        $model->created_at = time();
+        $model->updated_at = time();
+
         // Test the method changes status
         $userId = 1;
         $model->markAsAdded($userId);
@@ -121,6 +130,11 @@ class ExpenseSuggestionTest extends Unit
      */
     public function testMarkAsIgnoredTemporary()
     {
+        // Mock user login for BlameableBehavior
+        $user = new \app\models\User();
+        $user->id = 1;
+        \Yii::$app->user->login($user);
+
         $model = new ExpenseSuggestion();
         $model->expense_category_id = 1;
         $model->vendor_id = 1;
@@ -128,7 +142,11 @@ class ExpenseSuggestionTest extends Unit
         $model->pattern_months = json_encode(['2024-01-01']);
         $model->generated_at = time();
         $model->status = ExpenseSuggestion::STATUS_PENDING;
-        
+        $model->created_by = 1;
+        $model->updated_by = 1;
+        $model->created_at = time();
+        $model->updated_at = time();
+
         $userId = 1;
         $reason = 'Not needed this month';
         $model->markAsIgnored('temporary', $reason, $userId);
@@ -144,6 +162,11 @@ class ExpenseSuggestionTest extends Unit
      */
     public function testMarkAsIgnoredPermanent()
     {
+        // Mock user login for BlameableBehavior
+        $user = new \app\models\User();
+        $user->id = 1;
+        \Yii::$app->user->login($user);
+
         $model = new ExpenseSuggestion();
         $model->expense_category_id = 1;
         $model->vendor_id = 1;
@@ -151,7 +174,11 @@ class ExpenseSuggestionTest extends Unit
         $model->pattern_months = json_encode(['2024-01-01']);
         $model->generated_at = time();
         $model->status = ExpenseSuggestion::STATUS_PENDING;
-        
+        $model->created_by = 1;
+        $model->updated_by = 1;
+        $model->created_at = time();
+        $model->updated_at = time();
+
         $userId = 1;
         $reason = 'No longer applicable';
         $model->markAsIgnored('permanent', $reason, $userId);
@@ -200,7 +227,7 @@ class ExpenseSuggestionTest extends Unit
      */
     public function testTableName()
     {
-        verify(ExpenseSuggestion::tableName())->contains('expense_suggestion');
+        verify(ExpenseSuggestion::tableName())->stringContainsString('expense_suggestion');
     }
 
     /**
@@ -214,7 +241,7 @@ class ExpenseSuggestionTest extends Unit
         $label = $model->getStatusLabel();
         
         verify($label)->notEmpty();
-        verify($label)->contains('span');
+        verify($label)->stringContainsString('span');
     }
 
     /**

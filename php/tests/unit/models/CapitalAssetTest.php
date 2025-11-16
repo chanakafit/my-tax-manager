@@ -21,7 +21,7 @@ class CapitalAssetTest extends Unit
     public function testModelInstantiation()
     {
         $model = new CapitalAsset();
-        verify($model)->isInstanceOf(CapitalAsset::class);
+        verify($model)->instanceOf(CapitalAsset::class);
     }
 
     /**
@@ -130,7 +130,7 @@ class CapitalAssetTest extends Unit
      */
     public function testTableName()
     {
-        verify(CapitalAsset::tableName())->contains('capital_asset');
+        verify(CapitalAsset::tableName())->stringContainsString('capital_asset');
     }
 
     /**

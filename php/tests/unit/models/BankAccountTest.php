@@ -21,7 +21,7 @@ class BankAccountTest extends Unit
     public function testModelInstantiation()
     {
         $model = new BankAccount();
-        verify($model)->isInstanceOf(BankAccount::class);
+        verify($model)->instanceOf(BankAccount::class);
     }
 
     /**
@@ -76,7 +76,7 @@ class BankAccountTest extends Unit
      */
     public function testTableName()
     {
-        verify(BankAccount::tableName())->contains('bank_account');
+        verify(BankAccount::tableName())->stringContainsString('bank_account');
     }
 
     /**

@@ -212,7 +212,7 @@ class YourModelTest extends Unit
 
 ### Verification Methods
 
-Codeception uses the `verify()` function for assertions:
+Codeception 5.x uses the `verify()` function for assertions:
 
 ```php
 // Basic verifications
@@ -224,18 +224,20 @@ verify($value)->false();
 
 // Array verifications
 verify($array)->isArray();
-verify($array)->isEmpty();
+verify(empty($array))->true();  // For empty check
 verify($array)->notEmpty();
-verify($array)->contains($element);
+
+// String verifications
+verify($string)->stringContainsString($substring);
 
 // Numeric verifications
 verify($number)->greaterThan($min);
 verify($number)->lessThan($max);
-verify($number)->greaterOrEquals($min);
-verify($number)->lessOrEquals($max);
+verify($number)->greaterThanOrEqual($min);
+verify($number)->lessThanOrEqual($max);
 
 // Type verifications
-verify($object)->isInstanceOf(ClassName::class);
+verify($object)->instanceOf(ClassName::class);
 verify($value)->isString();
 verify($value)->isInt();
 verify($value)->isFloat();

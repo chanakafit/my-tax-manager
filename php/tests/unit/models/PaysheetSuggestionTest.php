@@ -21,7 +21,7 @@ class PaysheetSuggestionTest extends Unit
     public function testModelInstantiation()
     {
         $model = new PaysheetSuggestion();
-        verify($model)->isInstanceOf(PaysheetSuggestion::class);
+        verify($model)->instanceOf(PaysheetSuggestion::class);
     }
 
     /**
@@ -70,6 +70,11 @@ class PaysheetSuggestionTest extends Unit
      */
     public function testReject()
     {
+        // Mock user login for BlameableBehavior
+        $user = new \app\models\User();
+        $user->id = 1;
+        \Yii::$app->user->login($user);
+
         $model = new PaysheetSuggestion();
         $model->employee_id = 1;
         $model->suggested_month = '2024-01-01';
@@ -77,7 +82,11 @@ class PaysheetSuggestionTest extends Unit
         $model->net_salary = 50000;
         $model->generated_at = time();
         $model->status = PaysheetSuggestion::STATUS_PENDING;
-        
+        $model->created_by = 1;
+        $model->updated_by = 1;
+        $model->created_at = time();
+        $model->updated_at = time();
+
         $userId = 1;
         $reason = 'Employee on leave';
         $model->reject($userId, $reason);
@@ -98,8 +107,8 @@ class PaysheetSuggestionTest extends Unit
         
         $formatted = $model->getFormattedMonth();
         
-        verify($formatted)->contains('January');
-        verify($formatted)->contains('2024');
+        verify($formatted)->stringContainsString('January');
+        verify($formatted)->stringContainsString('2024');
     }
 
     /**
@@ -205,7 +214,7 @@ class PaysheetSuggestionTest extends Unit
      */
     public function testTableName()
     {
-        verify(PaysheetSuggestion::tableName())->contains('paysheet_suggestion');
+        verify(PaysheetSuggestion::tableName())->stringContainsString('paysheet_suggestion');
     }
 
     /**
@@ -219,7 +228,7 @@ class PaysheetSuggestionTest extends Unit
         $label = $model->getStatusLabel();
         
         verify($label)->notEmpty();
-        verify($label)->contains('span');
+        verify($label)->stringContainsString('span');
     }
 
     /**

@@ -21,7 +21,7 @@ class TaxYearSnapshotTest extends Unit
     public function testModelInstantiation()
     {
         $model = new TaxYearSnapshot();
-        verify($model)->isInstanceOf(TaxYearSnapshot::class);
+        verify($model)->instanceOf(TaxYearSnapshot::class);
     }
 
     /**
@@ -84,7 +84,7 @@ class TaxYearSnapshotTest extends Unit
      */
     public function testTableName()
     {
-        verify(TaxYearSnapshot::tableName())->contains('tax_year_snapshot');
+        verify(TaxYearSnapshot::tableName())->stringContainsString('tax_year_snapshot');
     }
 
     /**

@@ -21,7 +21,7 @@ class InvoiceTest extends Unit
     public function testModelInstantiation()
     {
         $model = new Invoice();
-        verify($model)->isInstanceOf(Invoice::class);
+        verify($model)->instanceOf(Invoice::class);
     }
 
     /**
@@ -148,7 +148,7 @@ class InvoiceTest extends Unit
      */
     public function testTableName()
     {
-        verify(Invoice::tableName())->contains('invoice');
+        verify(Invoice::tableName())->stringContainsString('invoice');
     }
 
     /**

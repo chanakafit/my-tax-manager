@@ -21,7 +21,7 @@ class VendorTest extends Unit
     public function testModelInstantiation()
     {
         $model = new Vendor();
-        verify($model)->isInstanceOf(Vendor::class);
+        verify($model)->instanceOf(Vendor::class);
     }
 
     /**
@@ -29,7 +29,7 @@ class VendorTest extends Unit
      */
     public function testTableName()
     {
-        verify(Vendor::tableName())->contains('vendor');
+        verify(Vendor::tableName())->stringContainsString('vendor');
     }
 
     /**

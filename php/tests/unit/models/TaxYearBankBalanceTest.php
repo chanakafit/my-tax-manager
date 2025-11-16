@@ -21,7 +21,7 @@ class TaxYearBankBalanceTest extends Unit
     public function testModelInstantiation()
     {
         $model = new TaxYearBankBalance();
-        verify($model)->isInstanceOf(TaxYearBankBalance::class);
+        verify($model)->instanceOf(TaxYearBankBalance::class);
     }
 
     /**
@@ -75,7 +75,7 @@ class TaxYearBankBalanceTest extends Unit
      */
     public function testTableName()
     {
-        verify(TaxYearBankBalance::tableName())->contains('tax_year_bank_balance');
+        verify(TaxYearBankBalance::tableName())->stringContainsString('tax_year_bank_balance');
     }
 
     /**

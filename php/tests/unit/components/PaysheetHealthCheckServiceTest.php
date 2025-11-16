@@ -41,7 +41,7 @@ class PaysheetHealthCheckServiceTest extends Unit
     public function testServiceInstantiation()
     {
         verify($this->service)->notNull();
-        verify($this->service)->isInstanceOf(PaysheetHealthCheckService::class);
+        verify($this->service)->instanceOf(PaysheetHealthCheckService::class);
         verify(method_exists($this->service, 'generateSuggestionsForMonth'))->true();
         verify(method_exists($this->service, 'generateSuggestionsForAllPastMonths'))->true();
         verify(method_exists($this->service, 'getPendingSuggestionsCount'))->true();
@@ -61,7 +61,7 @@ class PaysheetHealthCheckServiceTest extends Unit
         
         // Method should accept optional parameter
         $params = $method->getParameters();
-        verify(count($params))->greaterOrEquals(0);
+        verify(count($params))->greaterThanOrEqual(0);
     }
 
     /**
@@ -76,7 +76,7 @@ class PaysheetHealthCheckServiceTest extends Unit
         verify($method->isPublic())->true();
         
         $params = $method->getParameters();
-        verify(count($params))->greaterOrEquals(0);
+        verify(count($params))->greaterThanOrEqual(0);
     }
 
     /**
@@ -103,6 +103,6 @@ class PaysheetHealthCheckServiceTest extends Unit
         verify($method->isPublic())->true();
         
         $params = $method->getParameters();
-        verify(count($params))->greaterOrEquals(0);
+        verify(count($params))->greaterThanOrEqual(0);
     }
 }

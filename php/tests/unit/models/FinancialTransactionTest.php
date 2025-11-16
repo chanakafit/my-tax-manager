@@ -21,7 +21,7 @@ class FinancialTransactionTest extends Unit
     public function testModelInstantiation()
     {
         $model = new FinancialTransaction();
-        verify($model)->isInstanceOf(FinancialTransaction::class);
+        verify($model)->instanceOf(FinancialTransaction::class);
     }
 
     /**
@@ -139,7 +139,7 @@ class FinancialTransactionTest extends Unit
      */
     public function testTableName()
     {
-        verify(FinancialTransaction::tableName())->contains('financial_transaction');
+        verify(FinancialTransaction::tableName())->stringContainsString('financial_transaction');
     }
 
     /**

@@ -42,7 +42,7 @@ class ExpenseHealthCheckServiceTest extends Unit
     public function testServiceInstantiation()
     {
         verify($this->service)->notNull();
-        verify($this->service)->isInstanceOf(ExpenseHealthCheckService::class);
+        verify($this->service)->instanceOf(ExpenseHealthCheckService::class);
         verify(method_exists($this->service, 'generateSuggestionsForMonth'))->true();
         verify(method_exists($this->service, 'detectExpensePatterns'))->true();
         verify(method_exists($this->service, 'countConsecutiveMonths'))->true();
@@ -198,6 +198,6 @@ class ExpenseHealthCheckServiceTest extends Unit
         $params = $method->getParameters();
         
         // Method should accept a targetMonth parameter
-        verify(count($params))->greaterOrEquals(0);
+        verify(count($params))->greaterThanOrEqual(0);
     }
 }

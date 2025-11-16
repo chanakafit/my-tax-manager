@@ -21,7 +21,7 @@ class EmployeeTest extends Unit
     public function testModelInstantiation()
     {
         $model = new Employee();
-        verify($model)->isInstanceOf(Employee::class);
+        verify($model)->instanceOf(Employee::class);
     }
 
     /**
@@ -111,7 +111,7 @@ class EmployeeTest extends Unit
      */
     public function testTableName()
     {
-        verify(Employee::tableName())->contains('employee');
+        verify(Employee::tableName())->stringContainsString('employee');
     }
 
     /**

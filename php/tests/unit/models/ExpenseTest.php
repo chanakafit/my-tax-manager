@@ -21,7 +21,7 @@ class ExpenseTest extends Unit
     public function testModelInstantiation()
     {
         $model = new Expense();
-        verify($model)->isInstanceOf(Expense::class);
+        verify($model)->instanceOf(Expense::class);
     }
 
     /**
@@ -103,7 +103,7 @@ class ExpenseTest extends Unit
      */
     public function testTableName()
     {
-        verify(Expense::tableName())->contains('expense');
+        verify(Expense::tableName())->stringContainsString('expense');
     }
 
     /**

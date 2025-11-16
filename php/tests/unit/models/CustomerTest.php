@@ -21,7 +21,7 @@ class CustomerTest extends Unit
     public function testModelInstantiation()
     {
         $model = new Customer();
-        verify($model)->isInstanceOf(Customer::class);
+        verify($model)->instanceOf(Customer::class);
     }
 
     /**
@@ -29,7 +29,7 @@ class CustomerTest extends Unit
      */
     public function testTableName()
     {
-        verify(Customer::tableName())->contains('customer');
+        verify(Customer::tableName())->stringContainsString('customer');
     }
 
     /**

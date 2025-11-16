@@ -21,7 +21,7 @@ class PaysheetTest extends Unit
     public function testModelInstantiation()
     {
         $model = new Paysheet();
-        verify($model)->isInstanceOf(Paysheet::class);
+        verify($model)->instanceOf(Paysheet::class);
     }
 
     /**
@@ -87,7 +87,7 @@ class PaysheetTest extends Unit
      */
     public function testTableName()
     {
-        verify(Paysheet::tableName())->contains('paysheet');
+        verify(Paysheet::tableName())->stringContainsString('paysheet');
     }
 
     /**
