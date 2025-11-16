@@ -130,14 +130,15 @@ class TaxReturnController extends BaseController
                     $snapshot->save();
                 }
 
-                // Delete existing balances
-                TaxYearBankBalance::deleteAll(['tax_year_snapshot_id' => $snapshot->id]);
-                TaxYearLiabilityBalance::deleteAll(['tax_year_snapshot_id' => $snapshot->id]);
+                // Track which bank accounts were submitted
+                $submittedBankAccountIds = [];
 
                 // Save bank balances
                 if (isset($post['BankBalance'])) {
                     foreach ($post['BankBalance'] as $accountId => $data) {
                         if (!empty($data['balance'])) {
+                            $submittedBankAccountIds[] = $accountId;
+
                             // Check if we're updating existing or creating new
                             $balance = isset($existingBankBalances[$accountId])
                                 ? $existingBankBalances[$accountId]
@@ -148,18 +149,36 @@ class TaxReturnController extends BaseController
                             $balance->balance = $data['balance'];
                             $balance->balance_lkr = $data['balance_lkr'] ?? $data['balance'];
 
-                            // Handle file upload
+                            // Handle file upload - only if a new file is uploaded
                             $uploadedFile = \yii\web\UploadedFile::getInstanceByName("BankBalance[{$accountId}][document]");
                             if ($uploadedFile) {
                                 $balance->uploadedFile = $uploadedFile;
                             }
+                            // If no new file uploaded and this is an existing record, keep the old file
+                            // The model's beforeSave will handle this automatically
 
                             if (!$balance->save()) {
-                                throw new \Exception('Failed to save bank balance for account ' . $accountId);
+                                $errors = implode(', ', $balance->getFirstErrors());
+                                throw new \Exception('Failed to save bank balance for account ' . $accountId . ': ' . $errors);
                             }
                         }
                     }
                 }
+
+                // Delete bank balances that were not submitted (removed accounts)
+                if (!empty($submittedBankAccountIds)) {
+                    TaxYearBankBalance::deleteAll([
+                        'and',
+                        ['tax_year_snapshot_id' => $snapshot->id],
+                        ['not in', 'bank_account_id', $submittedBankAccountIds]
+                    ]);
+                } else {
+                    // If no balances submitted, delete all
+                    TaxYearBankBalance::deleteAll(['tax_year_snapshot_id' => $snapshot->id]);
+                }
+
+                // Delete existing liability balances (we'll recreate them)
+                TaxYearLiabilityBalance::deleteAll(['tax_year_snapshot_id' => $snapshot->id]);
 
                 // Save liability balances
                 if (isset($post['LiabilityBalance'])) {
