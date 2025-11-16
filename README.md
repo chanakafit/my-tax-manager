@@ -5,6 +5,7 @@ A comprehensive business management application built with Yii2 PHP framework, f
 ## 📋 Table of Contents
 
 - [Overview](#overview)
+- [⚠️ Important Disclaimer](#important-disclaimer)
 - [Key Features](#key-features)
 - [Technology Stack](#technology-stack)
 - [Quick Start](#quick-start)
