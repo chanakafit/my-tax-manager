@@ -227,7 +227,6 @@ class InvoiceTest extends Unit
     {
         $model = new Invoice();
         $model->payment_method = 'bank_transfer';
-        
         verify($model->payment_method)->equals('bank_transfer');
     }
 
@@ -237,8 +236,112 @@ class InvoiceTest extends Unit
     public function testReferenceNumberAttribute()
     {
         $model = new Invoice();
-        $model->reference_number = 'REF-123456';
-        
-        verify($model->reference_number)->equals('REF-123456');
+        $model->reference_number = 'REF123';
+        verify($model->reference_number)->equals('REF123');
+    }
+
+    /**
+     * Test getStatusList method
+     */
+    public function testGetStatusList()
+    {
+        $statusList = Invoice::getStatusList();
+
+        verify($statusList)->isArray();
+        verify($statusList)->arrayHasKey(Invoice::STATUS_PENDING);
+        verify($statusList)->arrayHasKey(Invoice::STATUS_PAID);
+        verify($statusList)->arrayHasKey(Invoice::STATUS_CANCELLED);
+        verify($statusList)->arrayHasKey(Invoice::STATUS_OVERDUE);
+        verify($statusList[Invoice::STATUS_PENDING])->equals('Pending');
+        verify($statusList[Invoice::STATUS_PAID])->equals('Paid');
+    }
+
+    /**
+     * Test generateInvoiceNumber method exists
+     */
+    public function testGenerateInvoiceNumberMethodExists()
+    {
+        verify(method_exists(Invoice::class, 'generateInvoiceNumber'))->true();
+    }
+
+    /**
+     * Test calculateTotals method exists
+     */
+    public function testCalculateTotalsMethodExists()
+    {
+        verify(method_exists(Invoice::class, 'calculateTotals'))->true();
+    }
+
+    /**
+     * Test recordPayment method exists
+     */
+    public function testRecordPaymentMethodExists()
+    {
+        verify(method_exists(Invoice::class, 'recordPayment'))->true();
+    }
+
+    /**
+     * Test updateOverdueStatus method exists
+     */
+    public function testUpdateOverdueStatusMethodExists()
+    {
+        verify(method_exists(Invoice::class, 'updateOverdueStatus'))->true();
+    }
+
+    /**
+     * Test getCurrencyList method exists
+     */
+    public function testGetCurrencyListMethodExists()
+    {
+        verify(method_exists(Invoice::class, 'getCurrencyList'))->true();
+    }
+
+    /**
+     * Test calculateLKRAmount method exists
+     */
+    public function testCalculateLKRAmountMethodExists()
+    {
+        verify(method_exists(Invoice::class, 'calculateLKRAmount'))->true();
+    }
+
+    /**
+     * Test customer relationship exists
+     */
+    public function testCustomerRelationship()
+    {
+        $model = new Invoice();
+        verify(method_exists($model, 'getCustomer'))->true();
+    }
+
+    /**
+     * Test invoice items relationship exists
+     */
+    public function testInvoiceItemsRelationship()
+    {
+        $model = new Invoice();
+        verify(method_exists($model, 'getInvoiceItems'))->true();
+    }
+
+    /**
+     * Test payment term relationship exists
+     */
+    public function testPaymentTermRelationship()
+    {
+        $model = new Invoice();
+        verify(method_exists($model, 'getPaymentTerm'))->true();
+    }
+
+    /**
+     * Test calculateLKRAmount logic
+     */
+    public function testCalculateLKRAmountLogic()
+    {
+        $model = new Invoice();
+        $model->total_amount = 100.00;
+        $model->exchange_rate = 200.00;
+
+        $model->calculateLKRAmount();
+
+        verify($model->total_amount_lkr)->equals(20000.00);
     }
 }

@@ -28,6 +28,15 @@ RUN apk add --no-cache libzip-dev && \
     docker-php-ext-install zip && \
     docker-php-ext-enable zip
 
+# Install Xdebug for code coverage (for Codeception tests)
+RUN apk add --no-cache ${PHPIZE_DEPS} linux-headers && \
+    pecl install xdebug && \
+    docker-php-ext-enable xdebug && \
+    apk del ${PHPIZE_DEPS} linux-headers
+
+# Configure Xdebug for coverage only (not debugging)
+RUN echo "xdebug.mode=coverage" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
+
 RUN apk add --no-cache dcron
 
 # Copy crontab file to the container

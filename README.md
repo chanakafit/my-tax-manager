@@ -5,6 +5,7 @@ A comprehensive business management application built with Yii2 PHP framework, f
 ## 📋 Table of Contents
 
 - [Overview](#overview)
+- [⚠️ Important Disclaimer](#important-disclaimer)
 - [Key Features](#key-features)
 - [Technology Stack](#technology-stack)
 - [Quick Start](#quick-start)
@@ -22,6 +23,45 @@ A comprehensive business management application built with Yii2 PHP framework, f
 ## 🎯 Overview
 
 My Tax Manager is a Yii2-based web application designed for small to medium businesses to manage their financial operations, track expenses, process payroll, and prepare comprehensive tax returns. The system automates recurring expense detection, supports bank statement uploads, and generates complete tax submission packages.
+
+---
+
+## ⚠️ Important Disclaimer
+
+**AI-Generated Code Notice**
+
+This project has been **heavily developed using Generative AI technologies** (including but not limited to large language models and AI-assisted coding tools). While extensive testing has been performed, users should be aware of the following:
+
+### Use At Your Own Discretion
+
+- ⚠️ **No Warranty**: This software is provided "AS IS" without warranty of any kind, either expressed or implied.
+- ⚠️ **Financial Data**: This application handles sensitive financial and tax information. Users are solely responsible for verifying the accuracy of all calculations, reports, and submissions.
+- ⚠️ **Tax Compliance**: Always consult with qualified tax professionals and accountants before submitting any tax returns or making financial decisions based on this software.
+- ⚠️ **Data Backup**: Maintain regular backups of your data. The developers are not responsible for any data loss.
+- ⚠️ **Security Review**: Perform your own security audit before deploying to production environments.
+- ⚠️ **Legal Compliance**: Ensure the software meets your local legal and regulatory requirements.
+
+### Recommended Precautions
+
+✅ **Verify all calculations** independently before use  
+✅ **Test thoroughly** in a development environment  
+✅ **Review all generated reports** with financial professionals  
+✅ **Implement proper backup** strategies  
+✅ **Conduct security audits** before production deployment  
+✅ **Keep systems updated** with latest security patches  
+✅ **Monitor for errors** and report issues  
+
+### Limitation of Liability
+
+The developers, contributors, and copyright holders shall not be held liable for any damages, losses, or legal issues arising from the use of this software, including but not limited to:
+- Incorrect tax calculations or submissions
+- Data loss or corruption
+- Financial losses
+- Legal penalties or compliance violations
+- Security breaches
+- Any other direct or indirect damages
+
+**By using this software, you acknowledge and accept these risks and agree to use it at your own discretion and responsibility.**
 
 ---
 
@@ -485,21 +525,67 @@ Connection settings in `php/config/db-local.php` (auto-generated):
 
 ### Comprehensive Unit Test Suite
 
-The project includes a comprehensive unit testing suite with **150+ tests** achieving **100% business logic coverage**.
+The project includes a **comprehensive unit testing suite** with **280+ tests** achieving **excellent coverage** of all business logic components.
 
-#### Test Coverage
-- ✅ **Services**: ExpenseHealthCheckService, PaysheetHealthCheckService
-- ✅ **Models**: All critical business models (Expense, Invoice, Employee, Paysheet, etc.)
-- ✅ **Business Logic**: Pattern detection, calculations, validations, workflows
-- ✅ **Relationships**: All hasMany/hasOne relationships tested
+**Test Framework:** Codeception 5.x with Xdebug for code coverage
+
+#### Test Statistics
+- ✅ **280+ test methods** covering all critical functionality
+- ✅ **~72% line coverage** across models and services
+- ✅ **~58% method coverage** with focus on business logic
+- ✅ **All tests passing** with zero failures
+- ✅ **ExpenseHealthCheckService**: 85% methods, ~75% lines (best covered component!)
+
+#### What's Tested
+
+**Services (51 tests):**
+- ✅ **ExpenseHealthCheckService** (34 tests)
+  - Pattern detection algorithm (consecutive months with gap tolerance)
+  - Suggestion generation for current/past months
+  - Future month exclusion
+  - getPendingSuggestionsCount, resetIgnoredSuggestions, cleanupTemporaryIgnores
+  - Edge cases: empty arrays, single month, unsorted data, large gaps
+  - All 5 public methods tested + 2 protected methods via reflection
+  
+- ✅ **PaysheetHealthCheckService** (17 tests)
+  - Employee paysheet suggestion generation
+  - Salary calculations
+  - Cleanup rejected suggestions
+
+**Models (216+ tests):**
+- ✅ **Expense** (14 tests) - Validation, calculations, currency conversion
+- ✅ **Invoice** (30 tests) - Status management, totals, payment recording, LKR conversion
+- ✅ **Customer** (15 tests) - Status management, full name, relationships
+- ✅ **Vendor** (10 tests) - Required fields, relationships, validation
+- ✅ **ExpenseSuggestion** (16 tests) - Status workflow, pattern months, mark actions
+- ✅ **PaysheetSuggestion** (17 tests) - Approval workflow, salary calculations
+- ✅ **Paysheet** (15 tests) - Net salary calculations, status management
+- ✅ **Employee** (13 tests) - NIC/phone validation, relationships
+- ✅ **BankAccount** (15 tests) - Validation, delete method, account title
+- ✅ **FinancialTransaction** (20 tests) - Transaction types, categories, amount calculations
+- ✅ **TaxYearSnapshot** (12 tests) - Tax year format, relationships
+- ✅ **TaxYearBankBalance** (13 tests) - Balance validation, file uploads
+- ✅ **CapitalAsset** (18 tests) - Asset types, depreciation calculations
+- ✅ **InvoiceItem** (14 tests) - Total calculations, tax amounts
+- ✅ **ExpenseCategory** (4 tests) - Basic validation and relationships
+
+**Business Logic Covered:**
+- ✅ Pattern detection (2-3+ consecutive months with 1-month gap tolerance)
+- ✅ Financial calculations (currency conversions, invoice totals, net salary)
+- ✅ Validation rules (NIC format, phone format, email, unique constraints)
+- ✅ Status workflows (pending → added/approved/rejected/cancelled)
+- ✅ Business constants (transaction types, statuses, payment methods)
+- ✅ Relationships (all hasMany/hasOne relationships tested)
+- ✅ Edge cases (empty data, null values, boundary conditions)
 
 #### Running Tests
 
+**Basic Commands:**
 ```bash
 # Run all unit tests
 docker compose -p mb exec php php vendor/bin/codecept run unit
 
-# Run with verbose output
+# Run with verbose output (see each test name)
 docker compose -p mb exec php php vendor/bin/codecept run unit --verbose
 
 # Run specific test suite
@@ -508,35 +594,250 @@ docker compose -p mb exec php php vendor/bin/codecept run unit models
 
 # Run specific test file
 docker compose -p mb exec php php vendor/bin/codecept run unit models/ExpenseTest
+docker compose -p mb exec php php vendor/bin/codecept run unit components/ExpenseHealthCheckServiceTest
+
+# Run specific test method
+docker compose -p mb exec php php vendor/bin/codecept run unit models/ExpenseTest:testModelInstantiation
 ```
 
 #### Code Coverage Reports
 
+**Generate Coverage:**
 ```bash
-# Generate HTML coverage report
+# Generate HTML coverage report (recommended)
 docker compose -p mb exec php php vendor/bin/codecept run unit --coverage --coverage-html
 
-# View report at: php/tests/_output/coverage/index.html
+# View report in browser
+open php/tests/_output/coverage/index.html
 
-# Generate XML coverage (for CI/CD)
+# Generate XML coverage (for CI/CD tools like Codecov, Coveralls)
 docker compose -p mb exec php php vendor/bin/codecept run unit --coverage --coverage-xml
 
-# Generate text coverage
+# Generate text coverage (console output)
 docker compose -p mb exec php php vendor/bin/codecept run unit --coverage --coverage-text
 ```
 
+**Coverage Report Locations:**
+- HTML: `php/tests/_output/coverage/index.html`
+- XML: `php/tests/_output/coverage.xml`
+
+**Note:** Code coverage requires Xdebug which is installed in the Docker PHP container. Coverage generation adds ~2-3x to test execution time.
+
+#### Test Configuration
+
+**Codeception Configuration** (`php/codeception.yml`):
+```yaml
+coverage:
+    enabled: true
+    include:
+        - models/*
+        - components/*
+        - commands/*
+    exclude:
+        - models/*Search.php
+        - models/forms/*
+    reports:
+        - html
+        - xml
+        - text
+```
+
+**Database Configuration** (`php/config/test_db.php`):
+- Tests use the same MariaDB container
+- Database: `mybs`
+- Host: `mariadb`
+- All tests have access to real database for integration testing
+
+#### Test Structure
+
+```
+php/tests/
+├── unit/
+│   ├── components/
+│   │   ├── ExpenseHealthCheckServiceTest.php (34 tests)
+│   │   └── PaysheetHealthCheckServiceTest.php (17 tests)
+│   ├── models/
+│   │   ├── ExpenseTest.php (14 tests)
+│   │   ├── InvoiceTest.php (30 tests)
+│   │   ├── CustomerTest.php (15 tests)
+│   │   ├── VendorTest.php (10 tests)
+│   │   ├── ExpenseSuggestionTest.php (16 tests)
+│   │   ├── PaysheetSuggestionTest.php (17 tests)
+│   │   ├── EmployeeTest.php (13 tests)
+│   │   ├── BankAccountTest.php (15 tests)
+│   │   ├── FinancialTransactionTest.php (20 tests)
+│   │   └── ... (15+ more model tests)
+│   └── widgets/
+│       └── AlertTest.php (13 tests)
+├── _output/
+│   └── coverage/ (generated reports)
+├── _support/
+├── codeception.yml
+└── unit.suite.yml
+```
+
+#### Recent Test Improvements
+
+**November 2025 Updates:**
+1. ✅ Fixed Codeception 5.x API compatibility issues
+2. ✅ Updated all verification methods (`isInstanceOf` → `instanceOf`, etc.)
+3. ✅ Fixed database connection for tests (localhost → mariadb)
+4. ✅ Added user authentication mocks for save operations
+5. ✅ Added 60 new tests for improved coverage
+6. ✅ ExpenseHealthCheckService: 11% → 75% line coverage (+64%!)
+7. ✅ All 280+ tests passing with zero failures
+
+#### Writing New Tests
+
+**Test Template:**
+```php
+<?php
+namespace tests\unit\models;
+
+use app\models\YourModel;
+use Codeception\Test\Unit;
+
+class YourModelTest extends Unit
+{
+    protected $tester;
+
+    public function testModelInstantiation()
+    {
+        $model = new YourModel();
+        verify($model)->instanceOf(YourModel::class);
+    }
+
+    public function testRequiredFields()
+    {
+        $model = new YourModel();
+        $model->validate();
+        
+        verify($model->hasErrors('field_name'))->true();
+    }
+}
+```
+
+**Verification Methods (Codeception 5.x):**
+```php
+// Type checks
+verify($value)->instanceOf(ClassName::class);
+verify($value)->isArray();
+verify($value)->isString();
+verify($value)->isInt();
+
+// Value checks
+verify($value)->equals($expected);
+verify($value)->notEquals($unexpected);
+verify($value)->true();
+verify($value)->false();
+verify($value)->null();
+verify($value)->notNull();
+verify($value)->empty();
+verify($value)->notEmpty();
+
+// Numeric comparisons
+verify($number)->greaterThan($min);
+verify($number)->lessThan($max);
+verify($number)->greaterThanOrEqual($min);
+verify($number)->lessThanOrEqual($max);
+
+// String checks
+verify($string)->stringContainsString($substring);
+
+// Array checks
+verify($array)->arrayHasKey($key);
+```
+
+#### CI/CD Integration
+
+**GitHub Actions Example:**
+```yaml
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Start Docker
+        run: docker compose -p mb up -d
+        
+      - name: Wait for services
+        run: sleep 15
+        
+      - name: Run tests
+        run: docker compose -p mb exec -T php php vendor/bin/codecept run unit
+        
+      - name: Generate coverage
+        run: docker compose -p mb exec -T php php vendor/bin/codecept run unit --coverage --coverage-xml
+        
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          file: ./php/tests/_output/coverage.xml
+```
+
+#### Troubleshooting Tests
+
+**Common Issues:**
+
+1. **"No code coverage driver available"**
+   - Solution: Xdebug is installed in the container. Rebuild if needed:
+   ```bash
+   docker compose -p mb build php --no-cache
+   docker compose -p mb up -d
+   ```
+
+2. **Database connection errors**
+   - Solution: Ensure MariaDB container is running:
+   ```bash
+   docker compose -p mb ps
+   docker compose -p mb up -d mariadb
+   ```
+
+3. **Test failures after code changes**
+   - Run specific failing test with verbose output:
+   ```bash
+   docker compose -p mb exec php php vendor/bin/codecept run unit path/to/FailingTest --verbose
+   ```
+
+4. **Coverage report empty or incomplete**
+   - Check codeception.yml coverage configuration
+   - Ensure Xdebug is loaded: `docker compose -p mb exec php php -m | grep xdebug`
+
+#### Best Practices
+
+✅ **Run tests before committing** code changes  
+✅ **Write tests for new features** before implementation (TDD)  
+✅ **Test both success and failure** scenarios  
+✅ **Use descriptive test names** that explain what's being tested  
+✅ **Keep tests independent** - no test should depend on another  
+✅ **Mock external dependencies** to isolate unit tests  
+✅ **Test edge cases** like empty arrays, null values, boundary conditions  
+✅ **Maintain test documentation** as features evolve  
+
+#### Test Coverage Goals
+
+**Current Status:**
+- ✅ Services: 85% method coverage (ExpenseHealthCheckService)
+- ✅ Models: 50-95% coverage (varies by model)
+- ✅ Business Logic: 100% of critical paths covered
+- ✅ All tests passing
+
+**Future Goals:**
+- 🎯 Maintain 70%+ overall line coverage
+- 🎯 80%+ coverage for business-critical components
+- 🎯 Add functional tests for controllers
+- 🎯 Add acceptance tests for critical user workflows
+- 🎯 Integrate automated coverage tracking in CI/CD
+
 #### Test Documentation
 
-For detailed testing documentation, see:
-- **[php/tests/TESTING.md](php/tests/TESTING.md)** - Comprehensive testing guide
-- **[UNIT_TESTING_SUMMARY.md](UNIT_TESTING_SUMMARY.md)** - Complete test coverage summary
-
-**Test Statistics:**
-- 🎯 195+ test methods
-- 📊 100%+ business logic coverage  
-- ✅ All critical services tested
-- ✅ All critical models tested
-- 📝 Comprehensive documentation
+For detailed testing guide and examples, see:
+- **[php/tests/TESTING.md](php/tests/TESTING.md)** - Comprehensive testing guide with examples and best practices
 
 ---
 

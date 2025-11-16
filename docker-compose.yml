@@ -48,6 +48,9 @@ services:
   php:
     env_file:
       - .env
+    build:
+      context: .
+      dockerfile: local/php/php-fpm/Dockerfile
     image: php:latest
     container_name: mb-php
     restart: always
