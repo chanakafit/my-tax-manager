@@ -4,6 +4,32 @@
 
 This project uses **Codeception** for comprehensive unit testing with a focus on achieving 100% business logic coverage. All critical components including services, models, and business rules are thoroughly tested.
 
+### Test Design Philosophy
+
+**True Unit Tests - No Database Required:**
+- Tests are designed to run **without database access** for fast, reliable execution
+- Focus on **business logic, algorithms, and calculations** rather than data persistence
+- Test **method existence, signatures, and public API** instead of database operations
+- Use **reflection** to test private methods when needed for algorithm validation
+- Database-dependent functionality should use functional or acceptance tests
+
+**What We Test:**
+- ✅ Business calculations (currency conversion, tax, salary)
+- ✅ Validation rules (required fields, formats, constraints)
+- ✅ Status workflows and transitions
+- ✅ Method signatures and parameter validation
+- ✅ Constants and configuration values
+- ✅ Algorithm correctness (pattern detection, consecutive months)
+- ✅ Relationship definitions (hasMany, hasOne)
+
+**What We Don't Test in Unit Tests:**
+- ❌ Database operations (save, find, update, delete)
+- ❌ Actual query execution
+- ❌ Transaction handling
+- ❌ Database fixture state
+
+These should be tested in **functional** or **acceptance** tests with proper database setup.
+
 ## Test Structure
 
 ```
@@ -75,10 +101,17 @@ cd /home/runner/work/my-tax-manager/my-tax-manager
 docker compose -p mb up -d
 ```
 
+**Note:** The unit tests are designed as true unit tests that **do not require database access**. They test:
+- Business logic and algorithms
+- Validation rules
+- Method signatures and public API
+- Calculations and conversions
+- Constants and configurations
+
 ### Run All Unit Tests
 
 ```bash
-# Inside Docker container
+# Inside Docker container - runs without database
 docker compose -p mb exec php php vendor/bin/codecept run unit
 
 # With verbose output
@@ -317,12 +350,13 @@ jobs:
 ## Best Practices
 
 1. **One assertion concept per test** - Each test should validate one specific behavior
-2. **Descriptive test names** - Use clear names like `testDoesNotGenerateSuggestionsForFutureMonths`
+2. **Descriptive test names** - Use clear names like `testGenerateSuggestionsForMonthMethodExists`
 3. **Test edge cases** - Include boundary conditions, null values, empty arrays
 4. **Test both positive and negative cases** - Valid and invalid inputs
 5. **Keep tests independent** - Tests should not depend on each other
-6. **Use fixtures for complex data** - Avoid creating test data in every test
-7. **Test public API only** - Use reflection for protected/private methods only when necessary
+6. **No database dependencies in unit tests** - Use method existence checks and reflection instead
+7. **Test public API** - Validate method signatures, parameters, and return types
+8. **Use fixtures for integration tests** - Database operations belong in functional/acceptance tests
 
 ## Goals Achieved
 
