@@ -98,6 +98,16 @@ class Employee extends BaseModel
     }
 
     /**
+     * Gets query for [[EmployeeAttendance]].
+     *
+     * @return ActiveQuery
+     */
+    public function getAttendances(): ActiveQuery
+    {
+        return $this->hasMany(EmployeeAttendance::class, ['employee_id' => 'id']);
+    }
+
+    /**
      * Get full name of employee
      */
     public function getFullName(): string

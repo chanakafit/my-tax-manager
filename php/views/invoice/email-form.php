@@ -1,5 +1,6 @@
 <?php
 
+use app\helpers\Params;
 use yii\helpers\Html;
 use yii\bootstrap5\ActiveForm;
 use kartik\select2\Select2;
@@ -86,7 +87,7 @@ $bccEmails = ArrayHelper::map(
                     ]) ?>
 
                     <?= $form->field($emailForm, 'subject')->textInput([
-                        'value' => "Invoice #{$model->invoice_number} from " . Yii::$app->params['businessName']
+                        'value' => "Invoice #{$model->invoice_number} from " . Params::get('businessName')
                     ]) ?>
 
                     <?= $form->field($emailForm, 'additionalNotes')->textarea([

@@ -20,6 +20,7 @@ $this->params['breadcrumbs'][] = $this->title;
         <?= BHtml::a('Update', ['update', 'id' => $model->id], ['class' => 'btn btn-primary']) ?>
         <?= BHtml::a('Paysheets', ['paysheet/index', 'PaysheetSearch[employee_id]' => $model->id], ['class' => 'btn btn-info']) ?>
         <?= BHtml::a('Update Payroll Details', ['update-payroll', 'employee_id' => $model->id], ['class' => 'btn btn-warning']) ?>
+        <?= BHtml::a('<i class="fas fa-calendar-check"></i> Manage Attendance', ['/employee-attendance/employee-index', 'employeeId' => $model->id], ['class' => 'btn btn-success']) ?>
     </p>
 
     <?= \app\widgets\BDetailView::widget([

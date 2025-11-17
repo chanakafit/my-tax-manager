@@ -148,7 +148,7 @@ $this->registerJs($js);
         </div>
 
         <div class="col-md-6">
-            <?= $form->field($model, 'payment_method')->dropDownList(Yii::$app->params['paymentMethods']) ?>
+            <?= $form->field($model, 'payment_method')->dropDownList(Params::get('paymentMethods')) ?>
 
             <?= $form->field($model, 'vendor_id')->widget(\kartik\select2\Select2::class, [
                 'options' => ['placeholder' => 'Type to search vendors...'],

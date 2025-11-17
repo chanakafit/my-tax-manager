@@ -2,7 +2,7 @@
 
 namespace app\components;
 
-use app\helpers\Params;
+use app\helpers\ConfigHelper;
 use Yii;
 use app\models\Invoice;
 use yii\base\Component;
@@ -221,18 +221,19 @@ class InvoicePdfGenerator extends Component
     private function getInvoiceHtml($invoice)
     {
         $customer = $invoice->customer;
-        $bankingDetails = Params::get('bankingDetails');
+        $bankingDetails = ConfigHelper::getBankingDetails();
+        $businessAddress = ConfigHelper::getBusinessAddress();
 
         $html = '
         <table class="header-table">
             <tr>
                 <td width="50%">
-                    <div class="org-name">' . Params::get('businessName') . '</div>
+                    <div class="org-name">' . ConfigHelper::getBusinessName() . '</div>
                     <div class="org-details">
-                        ' . nl2br(Params::get('businessAddress.line1')) . '<br>
-                        ' . nl2br(Params::get('businessAddress.line2')) . '<br>
-                        ' . Params::get('businessAddress.city') . ' ' . Params::get('businessAddress.postalCode') . '<br>
-                        ' . Params::get('businessAddress.province') . '<br>
+                        ' . nl2br($businessAddress['line1']) . '<br>
+                        ' . nl2br($businessAddress['line2']) . '<br>
+                        ' . $businessAddress['city'] . ' ' . $businessAddress['postalCode'] . '<br>
+                        ' . $businessAddress['province'] . '<br>
                         SriLanka
                     </div>
                 </td>
@@ -352,7 +353,7 @@ class InvoicePdfGenerator extends Component
         </table>
 
         <div class="total-in-words">
-            Amount in words: <strong>' . Params::get('currencies')[$invoice->currency_code] . ' ' . $this->numberToWords($invoice->total_amount) . '</strong>
+            Amount in words: <strong>' . ConfigHelper::getCurrencies()[$invoice->currency_code] . ' ' . $this->numberToWords($invoice->total_amount) . '</strong>
         </div>
 
         <div class="notes-section">
@@ -387,11 +388,17 @@ class InvoicePdfGenerator extends Component
         <div class="signature-section">
             <table width="100%">
                 <tr>
-                    <td width="240" style="text-align: left;">
-                        <img src="' . Yii::getAlias(Params::get('signature.image')) . '" style="height: 50px; margin-bottom: 5px;"><br>
+                    <td width="240" style="text-align: left;">';
+
+        $signatureImage = ConfigHelper::getSignatureImage();
+        if ($signatureImage) {
+            $html .= '<img src="' . Yii::getAlias('@app/web') . $signatureImage . '" style="height: 50px; margin-bottom: 5px;"><br>';
+        }
+
+        $html .= '
                         <div style="border-bottom: 1px solid #718096;"></div>
-                        <div class="signature-name">' . Params::get('signature.name') . '</div>
-                        <div class="signature-label">' . Params::get('signature.title') . '</div>
+                        <div class="signature-name">' . ConfigHelper::getSignatureName() . '</div>
+                        <div class="signature-label">' . ConfigHelper::getSignatureTitle() . '</div>
                     </td>
                     <td>&nbsp;</td>
                     <td width="240" class="text-right">

@@ -1,5 +1,6 @@
 <?php
 
+use app\helpers\ConfigHelper;
 use app\models\FinancialTransaction;
 use app\widgets\ExpenseHealthCheckWidget;
 use app\widgets\PaysheetHealthCheckWidget;
@@ -33,6 +34,15 @@ $this->params['breadcrumbs'][] = $this->title;
             </div>
         </div>
     </div>
+
+    <?php if (ConfigHelper::get('attendanceWidgetEnabled') == true): ?>
+        <!-- Attendance widget -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <?= \app\widgets\QuickAttendanceWidget::widget() ?>
+            </div>
+        </div>
+    <?php endif; ?>
 
     <!-- Expense Health Check Widget -->
     <div class="row mb-4">

@@ -2,6 +2,7 @@
 
 namespace app\commands;
 
+use app\helpers\Params;
 use Yii;
 use yii\console\Controller;
 use app\models\Invoice;
@@ -94,7 +95,7 @@ class FinanceController extends Controller
 
         foreach ($expenses as $expense) {
             Yii::$app->mailer->compose('expense-reminder', ['model' => $expense])
-                ->setTo(Yii::$app->params['adminEmail'])
+                ->setTo(Params::get('adminEmail'))
                 ->setSubject('Upcoming Expense Payment')
                 ->send();
         }
@@ -107,7 +108,7 @@ class FinanceController extends Controller
 
         foreach ($taxes as $tax) {
             Yii::$app->mailer->compose('tax-reminder', ['model' => $tax])
-                ->setTo(Yii::$app->params['adminEmail'])
+                ->setTo(Params::get('adminEmail'))
                 ->setSubject('Upcoming Tax Payment')
                 ->send();
         }

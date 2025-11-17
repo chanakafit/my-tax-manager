@@ -1,4 +1,6 @@
 <?php
+
+use app\helpers\Params;
 use yii\helpers\Html;
 use yii\helpers\Url;
 
@@ -124,19 +126,19 @@ $this->title = 'Invoice #' . $model->invoice_number;
                     <table class="table table-borderless">
                         <tr>
                             <td><strong>Bank Name:</strong></td>
-                            <td><?= Html::encode(Yii::$app->params['bankingDetails']['bankName']) ?></td>
+                            <td><?= Html::encode(Params::get('bankingDetailsBankName')) ?></td>
                         </tr>
                         <tr>
                             <td><strong>Branch Name:</strong></td>
-                            <td><?= Html::encode(Yii::$app->params['bankingDetails']['branchName']) ?></td>
+                            <td><?= Html::encode(Params::get('bankingDetailsBranchName')) ?></td>
                         </tr>
                         <tr>
                             <td><strong>Account Name:</strong></td>
-                            <td><?= Html::encode(Yii::$app->params['bankingDetails']['accountName']) ?></td>
+                            <td><?= Html::encode(Params::get('bankingDetailsAccountName')) ?></td>
                         </tr>
                         <tr>
                             <td><strong>Account Number:</strong></td>
-                            <td><?= Html::encode(Yii::$app->params['bankingDetails']['accountNumber']) ?></td>
+                            <td><?= Html::encode(Params::get('bankingDetailsAccountNumber')) ?></td>
                         </tr>
                     </table>
                 </div>
@@ -144,24 +146,24 @@ $this->title = 'Invoice #' . $model->invoice_number;
                     <table class="table table-borderless">
                         <tr>
                             <td><strong>SWIFT Code:</strong></td>
-                            <td><?= Html::encode(Yii::$app->params['bankingDetails']['swiftCode']) ?></td>
+                            <td><?= Html::encode(Params::get('bankingDetailsSwiftCode')) ?></td>
                         </tr>
                         <tr>
                             <td><strong>Bank Code:</strong></td>
-                            <td><?= Html::encode(Yii::$app->params['bankingDetails']['bankCode']) ?></td>
+                            <td><?= Html::encode(Params::get('bankingDetailsBankCode')) ?></td>
                         </tr>
                         <tr>
                             <td><strong>Branch Code:</strong></td>
-                            <td><?= Html::encode(Yii::$app->params['bankingDetails']['branchCode']) ?></td>
+                            <td><?= Html::encode(Params::get('bankingDetailsBranchCode')) ?></td>
                         </tr>
                     </table>
                 </div>
             </div>
             
-            <?php if (Yii::$app->params['bankingDetails']['bankAddress']): ?>
+            <?php if (Params::get('bankingDetailsBankAddress')): ?>
                 <div class="mt-2">
                     <strong>Bank Address:</strong><br>
-                    <?= Html::encode(Yii::$app->params['bankingDetails']['bankAddress']) ?>
+                    <?= Html::encode(Params::get('bankingDetailsBankAddress')) ?>
                 </div>
             <?php endif; ?>
         </div>

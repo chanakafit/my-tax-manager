@@ -246,7 +246,7 @@ class TaxRecord extends BaseModel
     public function recordPayment($amount, $paymentMethod, $referenceNumber)
     {
         $transaction = new FinancialTransaction();
-        $transaction->bank_account_id = Yii::$app->params['defaultBankAccountId'];
+        $transaction->bank_account_id = Params::get('defaultBankAccountId');
         $transaction->transaction_date = date('Y-m-d');
         $transaction->transaction_type = 'withdrawal';
         $transaction->amount = $amount;

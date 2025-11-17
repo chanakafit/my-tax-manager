@@ -1,5 +1,6 @@
 <?php
 
+use app\helpers\Params;
 use yii\helpers\Html;
 use yii\bootstrap5\BootstrapAsset;
 
@@ -54,13 +55,13 @@ BootstrapAsset::register($this);
 
 <div class="main-container">
     <div class="business-header">
-        <div class="business-name"><?= Html::encode(Yii::$app->params['businessName']) ?></div>
+        <div class="business-name"><?= Html::encode(Params::get('businessName')) ?></div>
         <div class="business-info">
-            <?= nl2br(Html::encode(Yii::$app->params['businessAddress']['line1'])) ?><br>
-            <?= nl2br(Html::encode(Yii::$app->params['businessAddress']['line2'])) ?><br>
-            <?= Html::encode(Yii::$app->params['businessAddress']['city']) ?>
-            <?= Html::encode(Yii::$app->params['businessAddress']['postalCode']) ?><br>
-            <?= Html::encode(Yii::$app->params['businessAddress']['province']) ?>
+            <?= nl2br(Html::encode(Params::get('businessAddressLine1'))) ?><br>
+            <?= nl2br(Html::encode(Params::get('businessAddressLine2'))) ?><br>
+            <?= Html::encode(Params::get('businessAddressCity')) ?>
+            <?= Html::encode(Params::get('businessAddressPostalCode')) ?><br>
+            <?= Html::encode(Params::get('businessAddressProvince')) ?>
         </div>
     </div>
 

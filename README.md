@@ -9,10 +9,11 @@ A comprehensive business management application built with Yii2 PHP framework, f
 - [Key Features](#key-features)
 - [Technology Stack](#technology-stack)
 - [Quick Start](#quick-start)
+- [System Configuration](#️-system-configuration)
+- [Employee Attendance](#-employee-attendance)
 - [Core Functionality](#core-functionality)
 - [Advanced Features](#advanced-features)
 - [Docker Services](#docker-services)
-- [Configuration](#configuration)
 - [Security](#security)
 - [Testing](#testing)
 - [Common Commands](#common-commands)
@@ -98,6 +99,23 @@ The developers, contributors, and copyright holders shall not be held liable for
   - Scans all active employees each month
   - Auto-generates paysheet suggestions with calculated salaries
   - Dashboard review and approval workflow
+
+### System Configuration
+- **Database-Driven Config**: Business settings stored in database for runtime updates
+- **UI Management**: Update configurations through web interface without code changes
+- **Categorized Settings**: Organized by Business, Banking, System, and Invoice categories
+- **Bulk Update**: Edit multiple configurations at once
+- **Signature Management**: Upload and manage signature images with live preview
+- **Cache Management**: Automatic cache clearing on configuration updates
+- **Helper Methods**: Easy access to configurations via `ConfigHelper` and `Params` helpers
+
+### Employee Attendance
+- **Attendance Tracking**: Record employee daily, half-day, and 1.5-day attendance
+- **Employee View**: Manage attendance records from individual employee pages
+- **Dashboard Widget**: Quick attendance entry for today directly from dashboard
+- **Monthly Summaries**: View attendance breakdown by month and type
+- **Yearly Reports**: Comprehensive attendance reports per employee
+- **CRUD Operations**: Full create, read, update, and delete functionality
   - Edit amounts before approval
   - Approve to create actual paysheets
 - **Automated Cron Jobs**: Schedule health checks and maintenance tasks
@@ -168,6 +186,126 @@ Password: admin123
 ```bash
 # Watch container logs (first run takes 2-3 minutes)
 docker logs -f mb-php
+```
+
+---
+
+## ⚙️ System Configuration
+
+The application uses a database-driven configuration system that allows runtime updates without code changes.
+
+### Configuration Management
+
+**Access:** Settings → System Configuration (or http://localhost/system-config/bulk-update)
+
+### Configuration Categories
+
+1. **Business Settings**
+   - Company name, address, contact details
+   - Admin and sender email addresses
+   - Editable through UI
+
+2. **Banking Settings**
+   - Bank name, SWIFT code, branch details
+   - Account information
+   - Bank address
+
+3. **System Settings**
+   - Currency symbol
+   - Payment methods (JSON)
+   - Invoice statuses
+   - Employee departments
+   - Supported currencies
+   - Bank names list
+
+4. **Invoice Settings**
+   - Starting invoice number
+   - Invoice number format
+
+5. **Signature Settings** (Settings → Signature Settings)
+   - Upload signature image (PNG/JPG, 200x80px recommended)
+   - Signature name and title
+   - Used in invoices and documents
+   - Live preview
+
+### Usage in Code
+
+```php
+use app\helpers\ConfigHelper;
+use app\helpers\Params;
+
+// Get business details
+$businessName = ConfigHelper::getBusinessName();
+$address = ConfigHelper::getBusinessAddress();
+
+// Get banking details
+$banking = ConfigHelper::getBankingDetails();
+
+// Get signature
+$signature = ConfigHelper::getSignatureDetails();
+// Returns: ['image' => '/uploads/...', 'name' => '...', 'title' => '...']
+
+// Using Params helper (with fallback)
+$value = Params::get('businessName', 'Default'); // Checks params.php first, then database
+```
+
+### Key Features
+
+- ✅ **Bulk Update**: Edit multiple configurations at once
+- ✅ **Category Filtering**: View and edit by category
+- ✅ **File Upload**: Upload signature images with validation
+- ✅ **Live Preview**: See changes before saving
+- ✅ **Cache Management**: Automatic cache clearing on updates
+- ✅ **Type Support**: String, Integer, Boolean, JSON, Array
+- ✅ **Helper Methods**: Easy access via `ConfigHelper` and `Params`
+- ✅ **Backward Compatible**: Falls back to params.php when needed
+
+---
+
+## 👥 Employee Attendance
+
+Track employee attendance with flexible day types and comprehensive reporting.
+
+### Features
+
+- **Attendance Types**: Full Day (1.0), Half Day (0.5), 1.5 Day (1.5)
+- **Quick Entry**: Dashboard widget for today's attendance
+- **Employee View**: Manage attendance from individual employee pages
+- **Monthly Summaries**: Breakdown by month and type
+- **Yearly Reports**: Comprehensive attendance per employee
+
+### Access Methods
+
+1. **Dashboard Widget**: Quick add today's attendance
+2. **Menu**: HR & Payroll → Attendance
+3. **Employee Page**: "Manage Attendance" button on employee view
+4. **Direct URL**: http://localhost/employee-attendance/index
+
+### Usage
+
+```php
+// Add attendance
+POST /employee-attendance/create
+{
+    'employee_id': 1,
+    'attendance_date': '2025-11-17',
+    'attendance_type': 'full_day'  // or 'half_day', 'one_and_half_day'
+}
+
+// Get monthly summary
+EmployeeAttendance::getMonthlySummary($employeeId, $year, $month);
+// Returns: ['full_day' => 20, 'half_day' => 2, 'one_and_half_day' => 1]
+
+// Get yearly summary
+EmployeeAttendance::getYearlySummary($employeeId, $year);
+// Returns monthly breakdown for the year
+```
+
+### Dashboard Widget
+
+Add to dashboard for quick access:
+```php
+<?= \app\widgets\QuickAttendanceWidget::widget() ?>
 ```
 
 ---

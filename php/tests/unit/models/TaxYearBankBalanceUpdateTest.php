@@ -35,23 +35,64 @@ class TaxYearBankBalanceUpdateTest extends Unit
     }
 
     /**
+     * Helper method to create a test snapshot with required fields
+     * @return TaxYearSnapshot
+     */
+    private function createTestSnapshot()
+    {
+        $snapshot = new TaxYearSnapshot();
+        // Detach all behaviors that set created_by/updated_by
+        foreach ($snapshot->getBehaviors() as $name => $behavior) {
+            $snapshot->detachBehavior($name);
+        }
+        $snapshot->tax_year = '2099';
+        $snapshot->snapshot_date = date('Y-m-d');
+        $snapshot->created_at = time();
+        $snapshot->updated_at = time();
+        $snapshot->created_by = 1;
+        $snapshot->updated_by = 1;
+        return $snapshot;
+    }
+
+    /**
+     * Helper method to create a test bank account
+     * @param int $id
+     * @param string $name
+     * @return OwnerBankAccount
+     */
+    private function createTestBankAccount($id, $name = 'Test Account')
+    {
+        $bankAccount = new OwnerBankAccount();
+        // Detach all behaviors that set created_by/updated_by
+        foreach ($bankAccount->getBehaviors() as $behaviorName => $behavior) {
+            $bankAccount->detachBehavior($behaviorName);
+        }
+        $bankAccount->id = $id;
+        $bankAccount->account_name = $name;
+        $bankAccount->account_number = (string)$id;
+        $bankAccount->bank_name = 'Test Bank';
+        $bankAccount->account_type = 'savings'; // Required field
+        $bankAccount->account_holder_type = 'business'; // Required field
+        $bankAccount->currency = 'LKR';
+        $bankAccount->is_active = 1;
+        $bankAccount->created_at = time();
+        $bankAccount->updated_at = time();
+        $bankAccount->created_by = 1;
+        $bankAccount->updated_by = 1;
+        return $bankAccount;
+    }
+
+    /**
      * Test that updating a bank balance without a new file preserves the old file
      */
     public function testUpdatePreservesExistingFile()
     {
         // Create test snapshot
-        $snapshot = new TaxYearSnapshot();
-        $snapshot->tax_year = 2099;
-        $snapshot->status = 'draft';
+        $snapshot = $this->createTestSnapshot();
         $this->assertTrue($snapshot->save(), 'Failed to create test snapshot');
 
         // Create test bank account
-        $bankAccount = new OwnerBankAccount();
-        $bankAccount->id = 9998;
-        $bankAccount->account_name = 'Test Account';
-        $bankAccount->account_number = '123456';
-        $bankAccount->bank_name = 'Test Bank';
-        $bankAccount->is_active = 1;
+        $bankAccount = $this->createTestBankAccount(9998, 'Test Account');
         $this->assertTrue($bankAccount->save(), 'Failed to create test bank account');
 
         // Create initial bank balance with a supporting document
@@ -86,18 +127,11 @@ class TaxYearBankBalanceUpdateTest extends Unit
     public function testUpdateWithNewFileReplacesOldFile()
     {
         // Create test snapshot
-        $snapshot = new TaxYearSnapshot();
-        $snapshot->tax_year = 2099;
-        $snapshot->status = 'draft';
+        $snapshot = $this->createTestSnapshot();
         $this->assertTrue($snapshot->save(), 'Failed to create test snapshot');
 
         // Create test bank account
-        $bankAccount = new OwnerBankAccount();
-        $bankAccount->id = 9999;
-        $bankAccount->account_name = 'Test Account 2';
-        $bankAccount->account_number = '654321';
-        $bankAccount->bank_name = 'Test Bank 2';
-        $bankAccount->is_active = 1;
+        $bankAccount = $this->createTestBankAccount(9999, 'Test Account 2');
         $this->assertTrue($bankAccount->save(), 'Failed to create test bank account');
 
         // Create initial bank balance with a supporting document
@@ -131,18 +165,11 @@ class TaxYearBankBalanceUpdateTest extends Unit
     public function testMultipleBankBalancesCanBeStored()
     {
         // Create test snapshot
-        $snapshot = new TaxYearSnapshot();
-        $snapshot->tax_year = 2099;
-        $snapshot->status = 'draft';
+        $snapshot = $this->createTestSnapshot();
         $this->assertTrue($snapshot->save(), 'Failed to create test snapshot');
 
         // Create first bank account and balance
-        $bankAccount1 = new OwnerBankAccount();
-        $bankAccount1->id = 9998;
-        $bankAccount1->account_name = 'Test Account 1';
-        $bankAccount1->account_number = '111111';
-        $bankAccount1->bank_name = 'Test Bank 1';
-        $bankAccount1->is_active = 1;
+        $bankAccount1 = $this->createTestBankAccount(9998, 'Test Account 1');
         $this->assertTrue($bankAccount1->save(), 'Failed to create first bank account');
 
         $balance1 = new TaxYearBankBalance();
@@ -154,12 +181,7 @@ class TaxYearBankBalanceUpdateTest extends Unit
         $this->assertTrue($balance1->save(), 'Failed to create first bank balance');
 
         // Create second bank account and balance
-        $bankAccount2 = new OwnerBankAccount();
-        $bankAccount2->id = 9999;
-        $bankAccount2->account_name = 'Test Account 2';
-        $bankAccount2->account_number = '222222';
-        $bankAccount2->bank_name = 'Test Bank 2';
-        $bankAccount2->is_active = 1;
+        $bankAccount2 = $this->createTestBankAccount(9999, 'Test Account 2');
         $this->assertTrue($bankAccount2->save(), 'Failed to create second bank account');
 
         $balance2 = new TaxYearBankBalance();
@@ -202,18 +224,11 @@ class TaxYearBankBalanceUpdateTest extends Unit
     public function testBalanceCanBeCreatedWithoutDocument()
     {
         // Create test snapshot
-        $snapshot = new TaxYearSnapshot();
-        $snapshot->tax_year = 2099;
-        $snapshot->status = 'draft';
+        $snapshot = $this->createTestSnapshot();
         $this->assertTrue($snapshot->save(), 'Failed to create test snapshot');
 
         // Create test bank account
-        $bankAccount = new OwnerBankAccount();
-        $bankAccount->id = 9998;
-        $bankAccount->account_name = 'Test Account';
-        $bankAccount->account_number = '123456';
-        $bankAccount->bank_name = 'Test Bank';
-        $bankAccount->is_active = 1;
+        $bankAccount = $this->createTestBankAccount(9998, 'Test Account');
         $this->assertTrue($bankAccount->save(), 'Failed to create test bank account');
 
         // Create balance without supporting document
@@ -233,18 +248,11 @@ class TaxYearBankBalanceUpdateTest extends Unit
     public function testRetrievingBalanceForSnapshot()
     {
         // Create test snapshot
-        $snapshot = new TaxYearSnapshot();
-        $snapshot->tax_year = 2099;
-        $snapshot->status = 'draft';
+        $snapshot = $this->createTestSnapshot();
         $this->assertTrue($snapshot->save(), 'Failed to create test snapshot');
 
         // Create test bank account
-        $bankAccount = new OwnerBankAccount();
-        $bankAccount->id = 9998;
-        $bankAccount->account_name = 'Test Account';
-        $bankAccount->account_number = '123456';
-        $bankAccount->bank_name = 'Test Bank';
-        $bankAccount->is_active = 1;
+        $bankAccount = $this->createTestBankAccount(9998, 'Test Account');
         $this->assertTrue($bankAccount->save(), 'Failed to create test bank account');
 
         // Create balance

@@ -338,7 +338,7 @@ class InvoiceController extends BaseController
                     'notes' => $emailForm->additionalNotes,
                     'publicUrl' => $publicUrl
                 ])
-                    ->setFrom([Yii::$app->params['senderEmail'] => Yii::$app->params['senderName']])
+                    ->setFrom([Params::get('senderEmail') => Params::get('senderName')])
                     ->setSubject($emailForm->subject)
                     ->attachContent($pdfContent, [
                         'fileName' => "Invoice_{$model->invoice_number}.pdf",

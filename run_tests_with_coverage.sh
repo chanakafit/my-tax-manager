@@ -13,13 +13,25 @@ echo ""
 # Navigate to project directory
 cd /Users/chana/Bee48/my-tax-manager
 
+# Clean up any orphaned containers first
+echo "Cleaning up orphaned containers..."
+docker rm -f $(docker ps -aq --filter name=mb-) 2>/dev/null || true
+
 # Check if containers are running
 echo "Checking Docker containers..."
-if ! docker compose -p mb ps | grep -q "mb-php.*Up"; then
+if ! docker-compose ps | grep -q "mb-php.*Up"; then
     echo "Starting Docker containers..."
-    docker compose -p mb up -d
+    docker-compose up -d
     echo "Waiting for containers to be ready..."
-    sleep 10
+    sleep 15
+
+    # Wait for database to be fully ready
+    echo "Waiting for database to be ready..."
+    until docker-compose exec -T mariadb mysql -uroot -pmauFJcuf5dhRMQrjj -e "SELECT 1" &>/dev/null; do
+        echo "Database not ready yet, waiting..."
+        sleep 2
+    done
+    echo "Database is ready!"
 fi
 
 echo "Docker containers are running."
@@ -28,7 +40,7 @@ echo ""
 # Run tests without coverage first (faster)
 echo "Step 1: Running all unit tests..."
 echo "-----------------------------------"
-docker compose -p mb exec php php vendor/bin/codecept run unit
+docker-compose exec php php vendor/bin/codecept run unit
 echo ""
 
 # Check if tests passed
@@ -39,7 +51,7 @@ if [ $? -eq 0 ]; then
     # Run with coverage
     echo "Step 2: Generating coverage report..."
     echo "--------------------------------------"
-    docker compose -p mb exec php php vendor/bin/codecept run unit --coverage --coverage-html --coverage-text
+    docker-compose exec php php vendor/bin/codecept run unit --coverage --coverage-html --coverage-text
 
     if [ $? -eq 0 ]; then
         echo ""

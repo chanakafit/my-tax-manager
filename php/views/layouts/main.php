@@ -77,6 +77,7 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
                         'label' => 'HR & Payroll',
                         'items' => [
                             ['label' => 'Employees', 'url' => ['/employee/index']],
+                            ['label' => 'Attendance', 'url' => ['/employee-attendance/index']],
                             ['label' => 'Paysheets', 'url' => ['/paysheet/index']],
                             ['label' => 'Paysheet Suggestions', 'url' => ['/paysheet-suggestion/index']],
                             '<div class="dropdown-divider"></div>',
@@ -91,6 +92,23 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
                             '<div class="dropdown-divider"></div>',
                             ['label' => 'Tax Return Submissions', 'url' => ['/tax-return/list']],
                             ['label' => 'Prepare Tax Return', 'url' => ['/tax-return/index']],
+                        ]
+                    ],
+                    [
+                        'label' => '<i class="fas fa-cog"></i> Settings',
+                        'encode' => false,
+                        'items' => [
+                            ['label' => '<i class="fas fa-sliders-h"></i> System Configuration', 'url' => ['/system-config/bulk-update'], 'encode' => false],
+                            ['label' => '<i class="fas fa-list"></i> View All Configs', 'url' => ['/system-config/index'], 'encode' => false],
+                            '<div class="dropdown-divider"></div>',
+                            ['label' => '<i class="fas fa-building"></i> Business Settings', 'url' => ['/system-config/bulk-update', 'category' => 'business'], 'encode' => false],
+                            ['label' => '<i class="fas fa-university"></i> Banking Settings', 'url' => ['/system-config/bulk-update', 'category' => 'banking'], 'encode' => false],
+                            ['label' => '<i class="fas fa-cogs"></i> System Settings', 'url' => ['/system-config/bulk-update', 'category' => 'system'], 'encode' => false],
+                            ['label' => '<i class="fas fa-file-invoice"></i> Invoice Settings', 'url' => ['/system-config/bulk-update', 'category' => 'invoice'], 'encode' => false],
+                            '<div class="dropdown-divider"></div>',
+                            ['label' => '<i class="fas fa-signature"></i> Signature Settings', 'url' => ['/system-config/signature'], 'encode' => false],
+                            '<div class="dropdown-divider"></div>',
+                            ['label' => '<i class="fas fa-sync"></i> Clear Config Cache', 'url' => ['/system-config/clear-cache'], 'encode' => false, 'linkOptions' => ['data-method' => 'post', 'data-confirm' => 'Are you sure you want to clear the configuration cache?']],
                         ]
                     ],
                     Yii::$app->user->isGuest

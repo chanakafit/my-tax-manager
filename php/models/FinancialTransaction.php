@@ -2,6 +2,7 @@
 
 namespace app\models;
 
+use app\helpers\Params;
 use Yii;
 
 /**
@@ -146,7 +147,7 @@ class FinancialTransaction extends BaseModel
     public static function createFromInvoice($invoice, $paymentMethod, $referenceNumber = null)
     {
         $transaction = new self();
-        $transaction->bank_account_id = Yii::$app->params['defaultBankAccountId'];
+        $transaction->bank_account_id = Params::get('defaultBankAccountId');
         $transaction->transaction_date = $invoice->payment_date ?: date('Y-m-d');
         $transaction->transaction_type = 'deposit';
         $transaction->amount = $invoice->total_amount;

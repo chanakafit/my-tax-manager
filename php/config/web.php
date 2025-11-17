@@ -21,9 +21,20 @@ $config = [
         'cache' => [
             'class' => 'yii\caching\FileCache',
         ],
+        'session' => [
+            'class' => 'yii\web\Session',
+            'timeout' => 7200, // 2 hours (default is 1440 seconds = 24 minutes)
+            'useCookies' => true,
+            'cookieParams' => [
+                'lifetime' => 7200,
+                'httpOnly' => true,
+            ],
+        ],
         'user' => [
             'identityClass' => 'app\models\User',
             'enableAutoLogin' => true,
+            'authTimeout' => 7200, // 2 hours before requiring re-authentication
+            'absoluteAuthTimeout' => 14400, // 4 hours absolute timeout
         ],
         'errorHandler' => [
             'errorAction' => 'site/error',
@@ -41,6 +52,12 @@ $config = [
                 [
                     'class' => 'yii\log\FileTarget',
                     'levels' => ['error', 'warning'],
+                ],
+                [
+                    'class' => 'yii\log\FileTarget',
+                    'levels' => ['info'],
+                    'categories' => ['app\controllers\SystemConfigController*'],
+                    'logFile' => '@runtime/logs/config-save.log',
                 ],
             ],
         ],

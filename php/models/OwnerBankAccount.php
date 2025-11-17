@@ -2,6 +2,7 @@
 
 namespace app\models;
 
+use app\helpers\Params;
 use Yii;
 
 /**
@@ -143,7 +144,7 @@ class OwnerBankAccount extends BaseModel
      */
     public static function getBankNameOptions(): array
     {
-        $bankNames = Yii::$app->params['bankNames'] ?? [];
+        $bankNames = Params::get('bankNames') ?? [];
         return array_combine($bankNames, $bankNames);
     }
 }
