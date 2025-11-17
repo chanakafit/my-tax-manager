@@ -31,8 +31,8 @@ $this->params['breadcrumbs'][] = $this->title;
     <div class="card mb-4">
         <div class="card-body">
             <form method="get" class="form-inline">
-                <label class="mr-2"><strong>Filter by Category:</strong></label>
-                <select name="category" class="form-control mr-2" onchange="this.form.submit()">
+                <label for="system-config-category" class="mr-2"><strong>Filter by Category:</strong></label>
+                <select id="system-config-category" name="category" class="form-control mr-2" onchange="this.form.submit()">
                     <option value="">All Categories</option>
                     <?php foreach ($categories as $category): ?>
                         <option value="<?= Html::encode($category) ?>" <?= $selectedCategory === $category ? 'selected' : '' ?>>
@@ -57,7 +57,8 @@ $this->params['breadcrumbs'][] = $this->title;
             // Group by category
             if ($currentCategory !== $config->category):
                 if ($currentCategory !== null):
-                    echo '</div></div>'; // Close previous card
+                    // Close previous category's table and wrapper divs properly
+                    echo '</tbody></table></div></div></div>'; // Close previous card (table + wrappers)
                 endif;
                 $currentCategory = $config->category;
                 ?>
@@ -81,47 +82,47 @@ $this->params['breadcrumbs'][] = $this->title;
                                 <tbody>
             <?php endif; ?>
 
-            <tr>
-                <td>
-                    <strong><?= Html::encode($config->config_key) ?></strong>
-                    <?php if ($config->description): ?>
-                        <br><small class="text-muted"><?= Html::encode($config->description) ?></small>
-                    <?php endif; ?>
-                </td>
-                <td>
-                    <?php if ($config->is_editable): ?>
-                        <?php if ($config->config_type === 'boolean'): ?>
-                            <?= Html::checkbox("SystemConfig[{$config->id}]", (bool)$config->config_value, [
-                                'value' => '1',
-                                'uncheck' => '0',
-                                'class' => 'form-check-input',
-                            ]) ?>
-                        <?php elseif ($config->config_type === 'json' || $config->config_type === 'array'): ?>
-                            <?= Html::textarea("SystemConfig[{$config->id}]", $config->config_value, [
-                                'class' => 'form-control',
-                                'rows' => 3,
-                            ]) ?>
-                        <?php else: ?>
-                            <?= Html::textInput("SystemConfig[{$config->id}]", $config->config_value, [
-                                'class' => 'form-control',
-                                'type' => $config->config_type === 'integer' ? 'number' : 'text',
-                            ]) ?>
-                        <?php endif; ?>
-                    <?php else: ?>
-                        <code><?= Html::encode($config->config_value) ?></code>
-                        <br><small class="text-muted">Not editable</small>
-                    <?php endif; ?>
-                </td>
-                <td>
-                    <span class="badge badge-secondary"><?= Html::encode($config->config_type) ?></span>
-                </td>
-                <td>
-                    <?= Html::a('<i class="fas fa-eye"></i>', ['view', 'id' => $config->id], [
-                        'class' => 'btn btn-sm btn-info',
-                        'title' => 'View',
-                    ]) ?>
-                </td>
-            </tr>
+                                    <tr>
+                                        <td>
+                                            <strong><?= Html::encode($config->config_key) ?></strong>
+                                            <?php if ($config->description): ?>
+                                                <br><small class="text-muted"><?= Html::encode($config->description) ?></small>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php if ($config->is_editable): ?>
+                                                <?php if ($config->config_type === 'boolean'): ?>
+                                                    <?= Html::checkbox("SystemConfig[{$config->id}]", (bool)$config->config_value, [
+                                                        'value' => '1',
+                                                        'uncheck' => '0',
+                                                        'class' => 'form-check-input',
+                                                    ]) ?>
+                                                <?php elseif ($config->config_type === 'json' || $config->config_type === 'array'): ?>
+                                                    <?= Html::textarea("SystemConfig[{$config->id}]", $config->config_value, [
+                                                        'class' => 'form-control',
+                                                        'rows' => 3,
+                                                    ]) ?>
+                                                <?php else: ?>
+                                                    <?= Html::textInput("SystemConfig[{$config->id}]", $config->config_value, [
+                                                        'class' => 'form-control',
+                                                        'type' => $config->config_type === 'integer' ? 'number' : 'text',
+                                                    ]) ?>
+                                                <?php endif; ?>
+                                            <?php else: ?>
+                                                <code><?= Html::encode($config->config_value) ?></code>
+                                                <br><small class="text-muted">Not editable</small>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-secondary"><?= Html::encode($config->config_type) ?></span>
+                                        </td>
+                                        <td>
+                                            <?= Html::a('<i class="fas fa-eye"></i>', ['view', 'id' => $config->id], [
+                                                'class' => 'btn btn-sm btn-info',
+                                                'title' => 'View',
+                                            ]) ?>
+                                        </td>
+                                    </tr>
 
         <?php endforeach; ?>
 
@@ -150,4 +151,3 @@ $this->registerCss(<<<CSS
 CSS
 );
 ?>
-
