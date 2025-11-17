@@ -8,10 +8,6 @@ use yii\helpers\ArrayHelper;
 
 class ConstantsHelper
 {
-    const SCENARIO_CREATE = 'create';
-    const SCENARIO_UPDATE = 'update';
-
-    const DEBUG_PASSWORD = '123456789c@H';
     const GII_TIMESTAMP_ATTRIBUTES = [
         'created_at',
         'updated_at'
@@ -46,16 +42,6 @@ class ConstantsHelper
         self::SATURDAY => 'Saturday',
         self::SUNDAY => 'Sunday'
     ];
-
-
-//self::MONDAY => 'Monday',
-//self::TUESDAY => 'Tuesday',
-//self::WEDNESDAY => 'Wednesday',
-//self::THURSDAY => 'Thursday',
-//self::FRIDAY => 'Friday',
-//self::SATURDAY => 'Saturday',
-//self::SUNDAY => 'Sunday'
-
 
     public static function getConstants($class, $prefix = null): array {
         try {

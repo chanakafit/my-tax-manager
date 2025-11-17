@@ -23,13 +23,6 @@ return [
     // Bootstrap Version
     'bsVersion' => '5.x',
 
-    // Signature Details (kept in params.php as it contains file path)
-    'signature' => [
-        'image' => '@app/assets/sign45678.png',
-        'name' => 'Chanaka Karunarathne',
-        'title' => 'Authorized Signature'
-    ],
-
     // Note: Other configurations have been moved to the database table 'system_config'
     // Use SystemConfig::get('config_key') to retrieve values
     // Or SystemConfig::getBusinessAddress() and SystemConfig::getBankingDetails() for grouped data
