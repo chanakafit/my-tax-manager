@@ -171,6 +171,9 @@ docker exec mb-php php /var/www/html/yii paysheet-health-check/count
 ### Bank Statement Upload & ZIP Export
 Upload statements (PDF/JPG/PNG, max 10MB) for each bank account. Download complete ZIP package with Excel report + all statements ready for tax submission.
 
+### Tax Return Support Documents
+Upload additional supporting documents for tax return submissions (e.g., income statements, property documents, loan agreements). Supports PDF, DOC, DOCX, XLS, XLSX, PNG, JPG, JPEG (max 10MB per file). All uploaded documents are automatically included in the final ZIP package download under "Support_Documents" folder.
+
 ---
 
 ## 🛠 Technology Stack

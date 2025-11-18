@@ -354,6 +354,20 @@ class TaxReturnController extends BaseController
             }
         }
 
+        // Add support documents to ZIP
+        $supportDocuments = $snapshot->getSupportDocuments()->all();
+        foreach ($supportDocuments as $document) {
+            if ($document->file_path) {
+                $documentPath = Yii::getAlias('@webroot/' . $document->file_path);
+                if (file_exists($documentPath)) {
+                    $extension = $document->getFileExtension();
+                    $safeTitle = preg_replace('/[^A-Za-z0-9_-]/', '_', $document->document_title);
+                    $docFilename = "Support_Documents/" . $safeTitle . '_' . $document->id . '.' . $extension;
+                    $zip->addFile($documentPath, $docFilename);
+                }
+            }
+        }
+
         $zip->close();
 
         // Send ZIP file to browser
@@ -965,6 +979,90 @@ class TaxReturnController extends BaseController
         }
 
         rmdir($tempDir);
+    }
+
+    /**
+     * Upload support document for tax return
+     * @param string $year
+     * @return string|\yii\web\Response
+     */
+    public function actionUploadDocument($year)
+    {
+        $snapshot = TaxYearSnapshot::findOne(['tax_year' => $year]);
+
+        if (!$snapshot) {
+            Yii::$app->session->setFlash('error', 'Tax year snapshot not found.');
+            return $this->redirect(['index', 'year' => $year]);
+        }
+
+        $model = new \app\models\TaxReturnSupportDocument();
+        $model->tax_year_snapshot_id = $snapshot->id;
+
+        if ($model->load(Yii::$app->request->post())) {
+            $model->uploadedFile = \yii\web\UploadedFile::getInstance($model, 'uploadedFile');
+
+            if ($model->upload()) {
+                Yii::$app->session->setFlash('success', 'Support document uploaded successfully.');
+                return $this->redirect(['view-report', 'year' => $year]);
+            } else {
+                Yii::$app->session->setFlash('error', 'Failed to upload document: ' . implode(', ', $model->getErrorSummary(true)));
+            }
+        }
+
+        return $this->render('upload-document', [
+            'model' => $model,
+            'year' => $year,
+            'snapshot' => $snapshot,
+        ]);
+    }
+
+    /**
+     * Delete support document
+     * @param int $id
+     * @return \yii\web\Response
+     * @throws NotFoundHttpException
+     */
+    public function actionDeleteDocument($id)
+    {
+        $model = \app\models\TaxReturnSupportDocument::findOne($id);
+
+        if (!$model) {
+            throw new NotFoundHttpException('Support document not found.');
+        }
+
+        $year = $model->taxYearSnapshot->tax_year;
+
+        if ($model->delete()) {
+            Yii::$app->session->setFlash('success', 'Support document deleted successfully.');
+        } else {
+            Yii::$app->session->setFlash('error', 'Failed to delete support document.');
+        }
+
+        return $this->redirect(['view-report', 'year' => $year]);
+    }
+
+    /**
+     * Download support document
+     * @param int $id
+     * @return \yii\web\Response
+     * @throws NotFoundHttpException
+     */
+    public function actionDownloadDocument($id)
+    {
+        $model = \app\models\TaxReturnSupportDocument::findOne($id);
+
+        if (!$model) {
+            throw new NotFoundHttpException('Support document not found.');
+        }
+
+        $filePath = Yii::getAlias('@webroot/' . $model->file_path);
+
+        if (!file_exists($filePath)) {
+            Yii::$app->session->setFlash('error', 'File not found on server.');
+            return $this->redirect(['view-report', 'year' => $model->taxYearSnapshot->tax_year]);
+        }
+
+        return Yii::$app->response->sendFile($filePath, $model->file_name);
     }
 }
 

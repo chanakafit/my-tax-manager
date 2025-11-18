@@ -18,6 +18,7 @@ use Yii;
  *
  * @property TaxYearBankBalance[] $bankBalances
  * @property TaxYearLiabilityBalance[] $liabilityBalances
+ * @property TaxReturnSupportDocument[] $supportDocuments
  */
 class TaxYearSnapshot extends BaseModel
 {
@@ -78,6 +79,16 @@ class TaxYearSnapshot extends BaseModel
     public function getLiabilityBalances()
     {
         return $this->hasMany(TaxYearLiabilityBalance::class, ['tax_year_snapshot_id' => 'id']);
+    }
+
+    /**
+     * Gets query for [[SupportDocuments]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getSupportDocuments()
+    {
+        return $this->hasMany(TaxReturnSupportDocument::class, ['tax_year_snapshot_id' => 'id']);
     }
 
     /**

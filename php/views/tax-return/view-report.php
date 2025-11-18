@@ -17,7 +17,11 @@ $this->params['breadcrumbs'][] = 'Report';
             </div>
             <div>
                 <?= Html::a('<i class="fas fa-edit"></i> Edit Balances', ['manage-balances', 'year' => $year], ['class' => 'btn btn-primary']) ?>
-                <?= Html::a('<i class="fas fa-file-archive"></i> Download ZIP (Excel + Bank Statements)', ['export-excel', 'year' => $year], ['class' => 'btn btn-success']) ?>
+                <?= Html::a('<i class="fas fa-file-archive"></i> Download ZIP Package', ['export-excel', 'year' => $year], [
+                    'class' => 'btn btn-success',
+                    'title' => 'Includes Excel reports, bank statements, receipts, invoices, and support documents',
+                    'data-toggle' => 'tooltip'
+                ]) ?>
             </div>
         </div>
         <div class="card-body">
@@ -510,6 +514,69 @@ $this->params['breadcrumbs'][] = 'Report';
                 <?php else: ?>
                 <p class="text-muted">No business liabilities recorded</p>
                 <?php endif; ?>
+            </section>
+
+            <!-- Support Documents Section -->
+            <section class="mb-5">
+                <h4 class="border-bottom pb-2 mb-3">
+                    <i class="fas fa-file-alt"></i> Support Documents
+                    <?= Html::a('<i class="fas fa-plus"></i> Upload Document', ['upload-document', 'year' => $year], ['class' => 'btn btn-sm btn-success float-right']) ?>
+                </h4>
+
+                <?php
+                $supportDocuments = $snapshot->getSupportDocuments()->orderBy(['created_at' => SORT_DESC])->all();
+                if (!empty($supportDocuments)):
+                ?>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Document Title</th>
+                                    <th>Description</th>
+                                    <th>File Name</th>
+                                    <th>File Size</th>
+                                    <th>Uploaded</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($supportDocuments as $document): ?>
+                                <tr>
+                                    <td><?= Html::encode($document->document_title) ?></td>
+                                    <td><?= Html::encode($document->document_description) ?></td>
+                                    <td><i class="fas fa-file"></i> <?= Html::encode($document->file_name) ?></td>
+                                    <td><?= $document->getFormattedFileSize() ?></td>
+                                    <td><?= Yii::$app->formatter->asDatetime($document->created_at) ?></td>
+                                    <td>
+                                        <?= Html::a('<i class="fas fa-download"></i>', ['download-document', 'id' => $document->id], [
+                                            'class' => 'btn btn-sm btn-info',
+                                            'title' => 'Download',
+                                            'data-toggle' => 'tooltip'
+                                        ]) ?>
+                                        <?= Html::a('<i class="fas fa-trash"></i>', ['delete-document', 'id' => $document->id], [
+                                            'class' => 'btn btn-sm btn-danger',
+                                            'title' => 'Delete',
+                                            'data-toggle' => 'tooltip',
+                                            'data-confirm' => 'Are you sure you want to delete this document?',
+                                            'data-method' => 'post'
+                                        ]) ?>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php else: ?>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle"></i> No support documents uploaded yet.
+                        <?= Html::a('Upload your first document', ['upload-document', 'year' => $year], ['class' => 'alert-link']) ?>
+                    </div>
+                <?php endif; ?>
+
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-lightbulb"></i> <strong>Tip:</strong> Upload any additional supporting documents here (e.g., income statements, property documents, loan agreements).
+                    These will be included in the final ZIP package for tax department submission.
+                </div>
             </section>
 
         </div>
