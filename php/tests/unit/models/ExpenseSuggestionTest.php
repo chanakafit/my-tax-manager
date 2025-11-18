@@ -4,6 +4,8 @@ namespace tests\unit\models;
 
 use app\models\ExpenseSuggestion;
 use Codeception\Test\Unit;
+use tests\fixtures\ExpenseCategoryFixture;
+use tests\fixtures\VendorFixture;
 
 /**
  * Test ExpenseSuggestion model business logic
@@ -14,6 +16,21 @@ class ExpenseSuggestionTest extends Unit
      * @var \UnitTester
      */
     protected $tester;
+
+    /**
+     * Load fixtures before each test
+     */
+    public function _fixtures()
+    {
+        return [
+            'categories' => [
+                'class' => ExpenseCategoryFixture::class,
+            ],
+            'vendors' => [
+                'class' => VendorFixture::class,
+            ],
+        ];
+    }
 
     /**
      * Test model instantiation
@@ -99,14 +116,15 @@ class ExpenseSuggestionTest extends Unit
      */
     public function testMarkAsAdded()
     {
-        // Mock user login for BlameableBehavior
-        $user = new \app\models\User();
-        $user->id = 1;
-        \Yii::$app->user->login($user);
+        $category = $this->tester->grabFixture('categories', 'utilities');
+        $vendor = $this->tester->grabFixture('vendors', 'electricity_board');
 
         $model = new ExpenseSuggestion();
-        $model->expense_category_id = 1;
-        $model->vendor_id = 1;
+        // Detach behaviors to prevent NULL created_by
+        $model->detachBehaviors();
+
+        $model->expense_category_id = $category->id;
+        $model->vendor_id = $vendor->id;
         $model->suggested_month = '2024-01-01';
         $model->pattern_months = json_encode(['2024-01-01']);
         $model->generated_at = time();
@@ -130,14 +148,15 @@ class ExpenseSuggestionTest extends Unit
      */
     public function testMarkAsIgnoredTemporary()
     {
-        // Mock user login for BlameableBehavior
-        $user = new \app\models\User();
-        $user->id = 1;
-        \Yii::$app->user->login($user);
+        $category = $this->tester->grabFixture('categories', 'utilities');
+        $vendor = $this->tester->grabFixture('vendors', 'electricity_board');
 
         $model = new ExpenseSuggestion();
-        $model->expense_category_id = 1;
-        $model->vendor_id = 1;
+        // Detach behaviors to prevent NULL created_by
+        $model->detachBehaviors();
+
+        $model->expense_category_id = $category->id;
+        $model->vendor_id = $vendor->id;
         $model->suggested_month = '2024-01-01';
         $model->pattern_months = json_encode(['2024-01-01']);
         $model->generated_at = time();
@@ -162,14 +181,15 @@ class ExpenseSuggestionTest extends Unit
      */
     public function testMarkAsIgnoredPermanent()
     {
-        // Mock user login for BlameableBehavior
-        $user = new \app\models\User();
-        $user->id = 1;
-        \Yii::$app->user->login($user);
+        $category = $this->tester->grabFixture('categories', 'utilities');
+        $vendor = $this->tester->grabFixture('vendors', 'electricity_board');
 
         $model = new ExpenseSuggestion();
-        $model->expense_category_id = 1;
-        $model->vendor_id = 1;
+        // Detach behaviors to prevent NULL created_by
+        $model->detachBehaviors();
+
+        $model->expense_category_id = $category->id;
+        $model->vendor_id = $vendor->id;
         $model->suggested_month = '2024-01-01';
         $model->pattern_months = json_encode(['2024-01-01']);
         $model->generated_at = time();

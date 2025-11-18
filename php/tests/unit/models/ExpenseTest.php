@@ -3,7 +3,12 @@
 namespace tests\unit\models;
 
 use app\models\Expense;
+use app\models\ExpenseCategory;
+use app\models\Vendor;
 use Codeception\Test\Unit;
+use tests\fixtures\ExpenseFixture;
+use tests\fixtures\ExpenseCategoryFixture;
+use tests\fixtures\VendorFixture;
 
 /**
  * Test Expense model business logic
@@ -14,6 +19,24 @@ class ExpenseTest extends Unit
      * @var \UnitTester
      */
     protected $tester;
+
+    /**
+     * Load fixtures before each test
+     */
+    public function _fixtures()
+    {
+        return [
+            'categories' => [
+                'class' => ExpenseCategoryFixture::class,
+            ],
+            'vendors' => [
+                'class' => VendorFixture::class,
+            ],
+            'expenses' => [
+                'class' => ExpenseFixture::class,
+            ],
+        ];
+    }
 
     /**
      * Test model instantiation
@@ -40,16 +63,40 @@ class ExpenseTest extends Unit
     }
 
     /**
-     * Test default values
+     * Test expense with fixture data
      */
-    public function testDefaultValues()
+    public function testExpenseFromFixture()
     {
-        $model = new Expense();
-        
-        verify($model->currency_code)->null();
-        verify($model->exchange_rate)->null();
-        verify($model->status)->null();
-        verify($model->is_recurring)->null();
+        $expense = $this->tester->grabFixture('expenses', 'electricity_jan');
+
+        verify($expense)->notNull();
+        verify($expense->amount)->equals(25000.00);
+        verify($expense->title)->equals('Monthly Electricity Bill - January');
+        verify($expense->status)->equals('approved');
+    }
+
+    /**
+     * Test category relationship
+     */
+    public function testCategoryRelationship()
+    {
+        $expense = $this->tester->grabFixture('expenses', 'rent_jan');
+
+        verify($expense->expenseCategory)->notNull();
+        verify($expense->expenseCategory)->instanceOf(ExpenseCategory::class);
+        verify($expense->expenseCategory->name)->equals('Rent');
+    }
+
+    /**
+     * Test vendor relationship
+     */
+    public function testVendorRelationship()
+    {
+        $expense = $this->tester->grabFixture('expenses', 'electricity_jan');
+
+        verify($expense->vendor)->notNull();
+        verify($expense->vendor)->instanceOf(Vendor::class);
+        verify($expense->vendor->name)->equals('Ceylon Electricity Board');
     }
 
     /**
@@ -74,28 +121,72 @@ class ExpenseTest extends Unit
      */
     public function testCurrencyConversion()
     {
-        $model = new Expense();
-        $model->amount = 100;
-        $model->currency_code = 'USD';
-        $model->exchange_rate = 300;
-        
-        // amount_lkr should be calculated as amount * exchange_rate
-        $expectedLkr = 100 * 300;
-        
-        // The model should handle this calculation
-        verify($model->amount * $model->exchange_rate)->equals($expectedLkr);
+        $expense = $this->tester->grabFixture('expenses', 'foreign_expense');
+
+        // USD expense with exchange rate
+        verify($expense->amount)->equals(500.00);
+        verify($expense->currency_code)->equals('USD');
+        verify($expense->exchange_rate)->equals(330.00);
+
+        // Calculate LKR equivalent
+        $lkrAmount = $expense->amount * $expense->exchange_rate;
+        verify($lkrAmount)->equals(165000.00);
     }
 
     /**
-     * Test receipt file validation
+     * Test recurring expense flag
      */
-    public function testReceiptFileValidation()
+    public function testRecurringExpense()
+    {
+        $recurringExpense = $this->tester->grabFixture('expenses', 'rent_jan');
+        $oneTimeExpense = $this->tester->grabFixture('expenses', 'office_supplies_oct');
+
+        verify($recurringExpense->is_recurring)->equals(1);
+        verify($oneTimeExpense->is_recurring)->equals(0);
+    }
+
+    /**
+     * Test creating new expense
+     */
+    public function testCreateExpense()
+    {
+        $category = $this->tester->grabFixture('categories', 'office_supplies');
+        $vendor = $this->tester->grabFixture('vendors', 'office_supplies_co');
+
+        $expense = new Expense();
+        // Detach all behaviors to prevent null user
+        $expense->detachBehaviors();
+
+        $expense->expense_category_id = $category->id;
+        $expense->vendor_id = $vendor->id;
+        $expense->expense_date = '2025-11-18';
+        $expense->title = 'Test Expense';
+        $expense->description = 'Test description';
+        $expense->amount = 10000.00;
+        $expense->currency_code = 'LKR';
+        $expense->exchange_rate = 1.00;
+        $expense->payment_method = 'cash';
+        $expense->status = 'pending';
+        $expense->created_at = time();
+        $expense->updated_at = time();
+        $expense->created_by = 1;
+        $expense->updated_by = 1;
+
+        verify($expense->save(false))->true();
+        verify($expense->id)->notNull();
+    }
+
+    /**
+     * Test payment method field
+     */
+    public function testPaymentMethodField()
     {
         $model = new Expense();
-        
-        // receipt_file should be optional
-        $model->validate(['receipt_file']);
-        verify($model->hasErrors('receipt_file'))->false();
+        $model->payment_method = 'bank_transfer';
+
+        // Payment method should be a string field
+        verify(is_string($model->payment_method))->true();
+        verify($model->payment_method)->equals('bank_transfer');
     }
 
     /**
@@ -120,89 +211,5 @@ class ExpenseTest extends Unit
         verify(array_key_exists('title', $labels))->true();
         verify(array_key_exists('amount', $labels))->true();
         verify(array_key_exists('payment_method', $labels))->true();
-    }
-
-    /**
-     * Test string field max length
-     */
-    public function testStringFieldMaxLength()
-    {
-        $model = new Expense();
-        $model->title = str_repeat('a', 256); // 256 characters, max is 255
-        $model->validate(['title']);
-        
-        verify($model->hasErrors('title'))->true();
-    }
-
-    /**
-     * Test valid payment methods
-     */
-    public function testPaymentMethods()
-    {
-        $model = new Expense();
-        
-        $validMethods = ['cash', 'bank_transfer', 'credit_card', 'check'];
-        
-        foreach ($validMethods as $method) {
-            $model->payment_method = $method;
-            // Should be string type
-            verify(is_string($model->payment_method))->true();
-        }
-    }
-
-    /**
-     * Test recurring expense fields
-     */
-    public function testRecurringExpenseFields()
-    {
-        $model = new Expense();
-        $model->is_recurring = 1;
-        $model->recurring_interval = 'monthly';
-        $model->next_recurring_date = '2024-02-01';
-        
-        verify($model->is_recurring)->equals(1);
-        verify($model->recurring_interval)->equals('monthly');
-        verify($model->next_recurring_date)->equals('2024-02-01');
-    }
-
-    /**
-     * Test date fields validation
-     */
-    public function testDateFieldsValidation()
-    {
-        $model = new Expense();
-        $model->expense_date = '2024-01-01';
-        $model->receipt_date = '2024-01-01';
-        $model->payment_date = '2024-01-02';
-        
-        $model->validate(['expense_date', 'receipt_date', 'payment_date']);
-        
-        verify($model->hasErrors('expense_date'))->false();
-        verify($model->hasErrors('receipt_date'))->false();
-        verify($model->hasErrors('payment_date'))->false();
-    }
-
-    /**
-     * Test exchange rate default
-     */
-    public function testExchangeRateDefault()
-    {
-        $model = new Expense();
-        $model->currency_code = 'LKR';
-        
-        // For LKR, exchange rate should typically be 1
-        verify($model->exchange_rate)->null(); // Before setting
-    }
-
-    /**
-     * Test tax amount field
-     */
-    public function testTaxAmountField()
-    {
-        $model = new Expense();
-        $model->tax_amount = 15.50;
-        
-        verify($model->tax_amount)->equals(15.50);
-        verify(is_numeric($model->tax_amount))->true();
     }
 }

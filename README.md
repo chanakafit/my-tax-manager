@@ -238,6 +238,32 @@ docker compose -p mb ps                                              # Container
 - Models: Expense, Invoice, Customer, Vendor, Employee, BankAccount, FinancialTransaction, etc. (216+ tests)
 - Business Logic: Pattern detection, financial calculations, validation rules, status workflows
 
+### Test Fixtures
+
+All database tests use **ActiveFixture** with realistic Sri Lankan business data:
+
+**Available Fixtures:**
+- EmployeeFixture (4 employees), CustomerFixture (4 customers), VendorFixture (4 vendors)
+- ExpenseCategoryFixture (5 categories), ExpenseFixture (5 expenses)
+- InvoiceFixture (6 invoices), EmployeeSalaryAdvanceFixture (5 advances)
+
+**Example Usage:**
+```php
+public function _fixtures()
+{
+    return [
+        'employees' => ['class' => EmployeeFixture::class],
+        'advances' => ['class' => EmployeeSalaryAdvanceFixture::class],
+    ];
+}
+
+public function testSomething()
+{
+    $employee = $this->tester->grabFixture('employees', 'john_doe');
+    verify($employee->first_name)->equals('John');
+}
+```
+
 **Run Tests:**
 ```bash
 # All tests
@@ -251,7 +277,9 @@ docker compose -p mb exec php php vendor/bin/codecept run unit --coverage --cove
 # View: php/tests/_output/coverage/index.html
 ```
 
-For detailed testing guide, see: **[php/tests/TESTING.md](php/tests/TESTING.md)**
+For detailed guides, see:
+- **[php/tests/TESTING.md](php/tests/TESTING.md)** - Complete testing guide
+- **[php/tests/FIXTURES.md](php/tests/FIXTURES.md)** - Fixture usage & creation guide
 
 ---
 

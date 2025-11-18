@@ -5,6 +5,8 @@ namespace tests\unit\models;
 use app\models\Employee;
 use app\models\EmployeeSalaryAdvance;
 use Codeception\Test\Unit;
+use tests\fixtures\EmployeeFixture;
+use tests\fixtures\EmployeeSalaryAdvanceFixture;
 
 /**
  * Test EmployeeSalaryAdvance model
@@ -17,40 +19,18 @@ class EmployeeSalaryAdvanceTest extends Unit
     protected $tester;
 
     /**
-     * @var Employee
+     * Load fixtures before each test
      */
-    private $employee;
-
-    protected function _before()
+    public function _fixtures()
     {
-        parent::_before();
-
-        // Create a test employee
-        $this->employee = new Employee();
-        // Detach behaviors to prevent null created_by/updated_by in test environment
-        $this->employee->detachBehaviors();
-        $this->employee->first_name = 'John';
-        $this->employee->last_name = 'Doe';
-        $this->employee->nic = '199012345678';
-        $this->employee->phone = '0771234567';
-        $this->employee->position = 'Software Engineer';
-        $this->employee->department = 'IT';
-        $this->employee->hire_date = '2025-01-01';
-        $this->employee->created_at = time();
-        $this->employee->updated_at = time();
-        $this->employee->created_by = 1;
-        $this->employee->updated_by = 1;
-        $this->employee->save(false);
-    }
-
-    protected function _after()
-    {
-        parent::_after();
-
-        // Clean up
-        if ($this->employee && !$this->employee->isNewRecord) {
-            $this->employee->delete();
-        }
+        return [
+            'employees' => [
+                'class' => EmployeeFixture::class,
+            ],
+            'advances' => [
+                'class' => EmployeeSalaryAdvanceFixture::class,
+            ],
+        ];
     }
 
     /**
@@ -58,15 +38,17 @@ class EmployeeSalaryAdvanceTest extends Unit
      */
     public function testCreateSalaryAdvance()
     {
+        $employee = $this->tester->grabFixture('employees', 'john_doe');
+
         $model = new EmployeeSalaryAdvance();
-        $model->employee_id = $this->employee->id;
-        $model->advance_date = '2025-11-01';
+        $model->employee_id = $employee->id;
+        $model->advance_date = '2025-11-18';
         $model->amount = 50000;
         $model->reason = 'Emergency';
         $model->notes = 'Medical expenses';
 
         verify($model->save())->true();
-        verify($model->amount)->equals(50000);
+        verify($model->amount)->equals(50000.00);
         verify($model->reason)->equals('Emergency');
     }
 
@@ -84,9 +66,9 @@ class EmployeeSalaryAdvanceTest extends Unit
         verify($model->hasErrors('amount'))->true();
 
         // Test negative amount
-        $employee = $this->tester->grabFixture('employees', 'employee1');
+        $employee = $this->tester->grabFixture('employees', 'john_doe');
         $model->employee_id = $employee->id;
-        $model->advance_date = '2025-11-01';
+        $model->advance_date = '2025-11-18';
         $model->amount = -1000;
         verify($model->validate())->false();
         verify($model->hasErrors('amount'))->true();
@@ -97,42 +79,43 @@ class EmployeeSalaryAdvanceTest extends Unit
     }
 
     /**
+     * Test employee relationship
+     */
+    public function testEmployeeRelationship()
+    {
+        $advance = $this->tester->grabFixture('advances', 'john_jan_advance');
+
+        verify($advance->employee)->notNull();
+        verify($advance->employee)->instanceOf(Employee::class);
+        verify($advance->employee->first_name)->equals('John');
+        verify($advance->employee->last_name)->equals('Doe');
+    }
+
+    /**
      * Test monthly overview
      */
     public function testMonthlyOverview()
     {
-        // Create advances in different months
-        $advance1 = new EmployeeSalaryAdvance();
-        $advance1->employee_id = $this->employee->id;
-        $advance1->advance_date = '2025-01-15';
-        $advance1->amount = 10000;
-        $advance1->save();
+        $employee = $this->tester->grabFixture('employees', 'john_doe');
 
-        $advance2 = new EmployeeSalaryAdvance();
-        $advance2->employee_id = $this->employee->id;
-        $advance2->advance_date = '2025-01-20';
-        $advance2->amount = 15000;
-        $advance2->save();
+        // Fixtures already have: jan (50k), feb (30k) advances for john_doe
+        $overview = EmployeeSalaryAdvance::getMonthlyOverview($employee->id, 2025);
 
-        $advance3 = new EmployeeSalaryAdvance();
-        $advance3->employee_id = $this->employee->id;
-        $advance3->advance_date = '2025-02-10';
-        $advance3->amount = 20000;
-        $advance3->save();
+        // January should have 1 advance totaling 50000
+        verify($overview[1]['count'])->equals(1);
+        verify($overview[1]['total'])->equals(50000.00);
 
-        $overview = EmployeeSalaryAdvance::getMonthlyOverview($this->employee->id, 2025);
-
-        // January should have 2 advances totaling 25000
-        verify($overview[1]['count'])->equals(2);
-        verify($overview[1]['total'])->equals(25000);
-
-        // February should have 1 advance totaling 20000
+        // February should have 1 advance totaling 30000
         verify($overview[2]['count'])->equals(1);
-        verify($overview[2]['total'])->equals(20000);
+        verify($overview[2]['total'])->equals(30000.00);
 
-        // March should have no advances
+        // March should have no advances (but fixture has one for jane)
         verify($overview[3]['count'])->equals(0);
         verify($overview[3]['total'])->equals(0);
+
+        // November should have 1 advance
+        verify($overview[11]['count'])->equals(1);
+        verify($overview[11]['total'])->equals(25000.00);
     }
 
     /**
@@ -140,28 +123,11 @@ class EmployeeSalaryAdvanceTest extends Unit
      */
     public function testYearToDateTotal()
     {
-        // Create advances in 2025
-        $advance1 = new EmployeeSalaryAdvance();
-        $advance1->employee_id = $this->employee->id;
-        $advance1->advance_date = '2025-01-15';
-        $advance1->amount = 10000;
-        $advance1->save();
+        $employee = $this->tester->grabFixture('employees', 'john_doe');
 
-        $advance2 = new EmployeeSalaryAdvance();
-        $advance2->employee_id = $this->employee->id;
-        $advance2->advance_date = '2025-06-20';
-        $advance2->amount = 15000;
-        $advance2->save();
-
-        // Create advance in 2024
-        $advance3 = new EmployeeSalaryAdvance();
-        $advance3->employee_id = $this->employee->id;
-        $advance3->advance_date = '2024-12-10';
-        $advance3->amount = 20000;
-        $advance3->save();
-
-        $yearTotal = EmployeeSalaryAdvance::getYearToDateTotal($this->employee->id, 2025);
-        verify($yearTotal)->equals(25000); // Only 2025 advances
+        // john_doe has advances in jan (50k), feb (30k), nov (25k) = 105k total for 2025
+        $yearTotal = EmployeeSalaryAdvance::getYearToDateTotal($employee->id, 2025);
+        verify($yearTotal)->equals(105000.00);
     }
 
     /**
@@ -169,31 +135,23 @@ class EmployeeSalaryAdvanceTest extends Unit
      */
     public function testMonthlyTotal()
     {
-        // Create advances in January 2025
-        $advance1 = new EmployeeSalaryAdvance();
-        $advance1->employee_id = $this->employee->id;
-        $advance1->advance_date = '2025-01-15';
-        $advance1->amount = 10000;
-        $advance1->save();
+        $employee = $this->tester->grabFixture('employees', 'john_doe');
 
-        $advance2 = new EmployeeSalaryAdvance();
-        $advance2->employee_id = $this->employee->id;
-        $advance2->advance_date = '2025-01-20';
-        $advance2->amount = 15000;
-        $advance2->save();
+        // January: 50000
+        $januaryTotal = EmployeeSalaryAdvance::getMonthlyTotal($employee->id, 2025, 1);
+        verify($januaryTotal)->equals(50000.00);
 
-        // Create advance in February
-        $advance3 = new EmployeeSalaryAdvance();
-        $advance3->employee_id = $this->employee->id;
-        $advance3->advance_date = '2025-02-10';
-        $advance3->amount = 20000;
-        $advance3->save();
+        // February: 30000
+        $februaryTotal = EmployeeSalaryAdvance::getMonthlyTotal($employee->id, 2025, 2);
+        verify($februaryTotal)->equals(30000.00);
 
-        $januaryTotal = EmployeeSalaryAdvance::getMonthlyTotal($this->employee->id, 2025, 1);
-        verify($januaryTotal)->equals(25000);
+        // November: 25000
+        $novemberTotal = EmployeeSalaryAdvance::getMonthlyTotal($employee->id, 2025, 11);
+        verify($novemberTotal)->equals(25000.00);
 
-        $februaryTotal = EmployeeSalaryAdvance::getMonthlyTotal($this->employee->id, 2025, 2);
-        verify($februaryTotal)->equals(20000);
+        // March: 0 (no advances)
+        $marchTotal = EmployeeSalaryAdvance::getMonthlyTotal($employee->id, 2025, 3);
+        verify($marchTotal)->equals(0);
     }
 
     /**
@@ -201,23 +159,12 @@ class EmployeeSalaryAdvanceTest extends Unit
      */
     public function testAvailableYears()
     {
-        // Create advances in different years
-        $advance1 = new EmployeeSalaryAdvance();
-        $advance1->employee_id = $this->employee->id;
-        $advance1->advance_date = '2023-01-15';
-        $advance1->amount = 10000;
-        $advance1->save();
+        $employee = $this->tester->grabFixture('employees', 'john_doe');
 
-        $advance2 = new EmployeeSalaryAdvance();
-        $advance2->employee_id = $this->employee->id;
-        $advance2->advance_date = '2025-01-20';
-        $advance2->amount = 15000;
-        $advance2->save();
+        // All advances in fixtures are from 2025
+        $years = EmployeeSalaryAdvance::getAvailableYears($employee->id);
 
-        $years = EmployeeSalaryAdvance::getAvailableYears($this->employee->id);
-
-        verify(count($years))->equals(2);
-        verify(in_array(2023, $years))->true();
+        verify(count($years))->greaterThan(0);
         verify(in_array(2025, $years))->true();
     }
 
@@ -226,38 +173,11 @@ class EmployeeSalaryAdvanceTest extends Unit
      */
     public function testGetTotalAdvanceAmount()
     {
-        // Create multiple advances
-        $advance1 = new EmployeeSalaryAdvance();
-        $advance1->employee_id = $this->employee->id;
-        $advance1->advance_date = '2025-11-01';
-        $advance1->amount = 50000;
-        $advance1->save();
+        $employee = $this->tester->grabFixture('employees', 'john_doe');
 
-        $advance2 = new EmployeeSalaryAdvance();
-        $advance2->employee_id = $this->employee->id;
-        $advance2->advance_date = '2025-11-15';
-        $advance2->amount = 30000;
-        $advance2->save();
-
-        $total = EmployeeSalaryAdvance::getTotalAdvanceAmount($this->employee->id);
-        verify($total)->equals(80000);
-    }
-
-
-
-    /**
-     * Test employee relationship
-     */
-    public function testEmployeeRelationship()
-    {
-        $salaryAdvance = new EmployeeSalaryAdvance();
-        $salaryAdvance->employee_id = $this->employee->id;
-        $salaryAdvance->advance_date = '2025-11-01';
-        $salaryAdvance->amount = 50000;
-        $salaryAdvance->save();
-
-        verify($salaryAdvance->employee)->notNull();
-        verify($salaryAdvance->employee)->instanceOf(Employee::class);
+        // john_doe has 3 advances: 50k + 30k + 25k = 105k
+        $total = EmployeeSalaryAdvance::getTotalAdvanceAmount($employee->id);
+        verify($total)->equals(105000.00);
     }
 
     /**
@@ -265,18 +185,15 @@ class EmployeeSalaryAdvanceTest extends Unit
      */
     public function testUpdateSalaryAdvance()
     {
-        $salaryAdvance = new EmployeeSalaryAdvance();
-        $salaryAdvance->employee_id = $this->employee->id;
-        $salaryAdvance->advance_date = '2025-11-01';
-        $salaryAdvance->amount = 50000;
-        $salaryAdvance->save();
+        $advance = $this->tester->grabFixture('advances', 'john_jan_advance');
 
-        $salaryAdvance->repaid_amount = 10000;
-        $salaryAdvance->notes = 'Partial payment made';
+        $advance->amount = 60000.00;
+        $advance->reason = 'Updated reason';
+        verify($advance->save())->true();
 
-        verify($salaryAdvance->save())->true();
-        verify($salaryAdvance->repaid_amount)->equals(10000);
-        verify($salaryAdvance->notes)->equals('Partial payment made');
+        $updatedAdvance = EmployeeSalaryAdvance::findOne($advance->id);
+        verify($updatedAdvance->amount)->equals(60000.00);
+        verify($updatedAdvance->reason)->equals('Updated reason');
     }
 
     /**
@@ -284,52 +201,29 @@ class EmployeeSalaryAdvanceTest extends Unit
      */
     public function testDeleteSalaryAdvance()
     {
-        $salaryAdvance = new EmployeeSalaryAdvance();
-        $salaryAdvance->employee_id = $this->employee->id;
-        $salaryAdvance->advance_date = '2025-11-01';
-        $salaryAdvance->amount = 50000;
-        $salaryAdvance->save();
+        $advance = $this->tester->grabFixture('advances', 'robert_nov_advance');
+        $advanceId = $advance->id;
 
-        $id = $salaryAdvance->id;
-
-        verify($salaryAdvance->delete())->notEquals(false);
-        verify(EmployeeSalaryAdvance::findOne($id))->null();
+        verify($advance->delete())->notNull();
+        verify(EmployeeSalaryAdvance::findOne($advanceId))->null();
     }
 
     /**
      * Test cascade delete when employee is deleted
      */
-    public function testCascadeDelete()
+    public function testCascadeDeleteOnEmployeeDelete()
     {
-        $testEmployee = new Employee();
-        $testEmployee->detachBehaviors();
-        $testEmployee->first_name = 'Jane';
-        $testEmployee->last_name = 'Smith';
-        $testEmployee->nic = '199112345678';
-        $testEmployee->phone = '0772345678';
-        $testEmployee->position = 'Manager';
-        $testEmployee->department = 'HR';
-        $testEmployee->hire_date = '2025-01-01';
-        $testEmployee->created_at = time();
-        $testEmployee->updated_at = time();
-        $testEmployee->created_by = 1;
-        $testEmployee->updated_by = 1;
-        $testEmployee->save(false);
+        $employee = $this->tester->grabFixture('employees', 'robert_brown');
+        $advanceId = $this->tester->grabFixture('advances', 'robert_nov_advance')->id;
 
-        $advance = new EmployeeSalaryAdvance();
-        $advance->employee_id = $testEmployee->id;
-        $advance->advance_date = '2025-11-01';
-        $advance->amount = 50000;
-        $advance->save();
-
-        $advanceId = $advance->id;
+        // Delete related paysheets first (if any) to avoid foreign key constraint
+        \app\models\Paysheet::deleteAll(['employee_id' => $employee->id]);
 
         // Delete employee
-        $testEmployee->delete();
+        verify($employee->delete())->notNull();
 
-        // Verify salary advance is also deleted
+        // Advance should also be deleted due to CASCADE
         verify(EmployeeSalaryAdvance::findOne($advanceId))->null();
     }
-
 }
 

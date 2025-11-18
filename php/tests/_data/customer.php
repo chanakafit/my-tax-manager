@@ -1,0 +1,53 @@
+<?php
+
+return [
+    'tech_solutions' => [
+        'business_name' => 'Tech Solutions (Pvt) Ltd',
+        'contact_person' => 'Michael Fernando',
+        'email' => 'info@techsolutions.lk',
+        'phone' => '0112345678',
+        'address' => '123 Galle Road, Colombo 03',
+        'status' => 'active',
+        'created_at' => 1700000000,
+        'updated_at' => 1700000000,
+        'created_by' => 1,
+        'updated_by' => 1,
+    ],
+    'retail_mart' => [
+        'business_name' => 'Retail Mart Lanka',
+        'contact_person' => 'Saman Perera',
+        'email' => 'contact@retailmart.lk',
+        'phone' => '0112223344',
+        'address' => '456 Duplication Road, Colombo 04',
+        'status' => 'active',
+        'created_at' => 1700000000,
+        'updated_at' => 1700000000,
+        'created_by' => 1,
+        'updated_by' => 1,
+    ],
+    'global_exports' => [
+        'business_name' => 'Global Exports Ltd',
+        'contact_person' => 'Nimal Silva',
+        'email' => 'sales@globalexports.lk',
+        'phone' => '0115556677',
+        'address' => '789 Union Place, Colombo 02',
+        'status' => 'active',
+        'created_at' => 1700000000,
+        'updated_at' => 1700000000,
+        'created_by' => 1,
+        'updated_by' => 1,
+    ],
+    'inactive_corp' => [
+        'business_name' => 'Inactive Corporation',
+        'contact_person' => 'Kamal Jayasuriya',
+        'email' => 'info@inactive.lk',
+        'phone' => '0117778899',
+        'address' => '321 Baseline Road, Colombo 09',
+        'status' => 'inactive',
+        'created_at' => 1700000000,
+        'updated_at' => 1700000000,
+        'created_by' => 1,
+        'updated_by' => 1,
+    ],
+];
+

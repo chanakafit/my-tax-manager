@@ -4,6 +4,7 @@ namespace tests\unit\models;
 
 use app\models\PaysheetSuggestion;
 use Codeception\Test\Unit;
+use tests\fixtures\EmployeeFixture;
 
 /**
  * Test PaysheetSuggestion model business logic
@@ -14,6 +15,18 @@ class PaysheetSuggestionTest extends Unit
      * @var \UnitTester
      */
     protected $tester;
+
+    /**
+     * Load fixtures before each test
+     */
+    public function _fixtures()
+    {
+        return [
+            'employees' => [
+                'class' => EmployeeFixture::class,
+            ],
+        ];
+    }
 
     /**
      * Test model instantiation
@@ -70,13 +83,13 @@ class PaysheetSuggestionTest extends Unit
      */
     public function testReject()
     {
-        // Mock user login for BlameableBehavior
-        $user = new \app\models\User();
-        $user->id = 1;
-        \Yii::$app->user->login($user);
+        $employee = $this->tester->grabFixture('employees', 'john_doe');
 
         $model = new PaysheetSuggestion();
-        $model->employee_id = 1;
+        // Detach behaviors to prevent NULL created_by
+        $model->detachBehaviors();
+
+        $model->employee_id = $employee->id;
         $model->suggested_month = '2024-01-01';
         $model->basic_salary = 50000;
         $model->net_salary = 50000;

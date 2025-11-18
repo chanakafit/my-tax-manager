@@ -4,6 +4,7 @@ namespace tests\unit\models;
 
 use app\models\Employee;
 use Codeception\Test\Unit;
+use tests\fixtures\EmployeeFixture;
 
 /**
  * Test Employee model business logic
@@ -16,12 +17,50 @@ class EmployeeTest extends Unit
     protected $tester;
 
     /**
+     * Load fixtures before each test
+     */
+    public function _fixtures()
+    {
+        return [
+            'employees' => [
+                'class' => EmployeeFixture::class,
+            ],
+        ];
+    }
+
+    /**
      * Test model instantiation
      */
     public function testModelInstantiation()
     {
         $model = new Employee();
         verify($model)->instanceOf(Employee::class);
+    }
+
+    /**
+     * Test employee from fixture
+     */
+    public function testEmployeeFromFixture()
+    {
+        $employee = $this->tester->grabFixture('employees', 'john_doe');
+
+        verify($employee)->notNull();
+        verify($employee->first_name)->equals('John');
+        verify($employee->last_name)->equals('Doe');
+        verify($employee->nic)->equals('199012345678');
+        verify($employee->position)->equals('Software Engineer');
+        verify($employee->department)->equals('IT');
+    }
+
+    /**
+     * Test full name getter
+     */
+    public function testFullName()
+    {
+        $employee = $this->tester->grabFixture('employees', 'jane_smith');
+
+        $fullName = $employee->getFullName();
+        verify($fullName)->equals('Jane Smith');
     }
 
     /**
@@ -48,13 +87,13 @@ class EmployeeTest extends Unit
     {
         $model = new Employee();
         
-        // Valid old NIC format
-        $model->nic = '912345678V';
+        // Valid old NIC format (unique, not in fixtures)
+        $model->nic = '955555555V';
         $model->validate(['nic']);
         verify($model->hasErrors('nic'))->false();
         
-        // Valid new NIC format
-        $model->nic = '199212345678';
+        // Valid new NIC format (unique, not in fixtures)
+        $model->nic = '199999999999';
         $model->validate(['nic']);
         verify($model->hasErrors('nic'))->false();
         
