@@ -162,7 +162,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                             'contentOptions' => ['class' => 'text-end'],
                                     ],
                                     'reference_number',
-                                    'notes',
+                                    'notes:ntext',
                                     [
                                             'class' => 'yii\grid\ActionColumn',
                                             'template' => '{view}',
