@@ -108,6 +108,16 @@ class Employee extends BaseModel
     }
 
     /**
+     * Gets query for [[EmployeeSalaryAdvance]].
+     *
+     * @return ActiveQuery
+     */
+    public function getSalaryAdvances(): ActiveQuery
+    {
+        return $this->hasMany(EmployeeSalaryAdvance::class, ['employee_id' => 'id']);
+    }
+
+    /**
      * Get full name of employee
      */
     public function getFullName(): string

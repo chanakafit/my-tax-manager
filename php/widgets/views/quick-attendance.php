@@ -74,8 +74,19 @@ use yii\widgets\ActiveForm;
                                         ) ?>
                                     </td>
                                     <td>
-                                        <span class="badge badge-<?= $attendance->attendance_type === 'full_day' ? 'success' : ($attendance->attendance_type === 'half_day' ? 'warning' : 'info') ?>">
-                                            <?= Html::encode($attendance->attendanceTypeLabel) ?>
+                                        <?php
+                                        $badgeClass = 'badge-success';
+                                        $icon = 'fa-check-circle';
+                                        if ($attendance->attendance_type === 'half_day') {
+                                            $badgeClass = 'badge-warning';
+                                            $icon = 'fa-adjust';
+                                        } elseif ($attendance->attendance_type === 'day_1_5') {
+                                            $badgeClass = 'badge-info';
+                                            $icon = 'fa-plus-circle';
+                                        }
+                                        ?>
+                                        <span class="badge <?= $badgeClass ?> badge-pill px-3 py-2">
+                                            <i class="fas <?= $icon ?>"></i> <?= Html::encode($attendance->attendanceTypeLabel) ?>
                                         </span>
                                     </td>
                                     <td>
@@ -167,6 +178,39 @@ $this->registerJs(<<<JS
         return false;
     });
 JS
+);
+
+$this->registerCss(<<<CSS
+/* Improve badge visibility */
+.quick-attendance-widget .badge {
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.quick-attendance-widget .badge-success {
+    background-color: #28a745;
+    color: #fff;
+}
+
+.quick-attendance-widget .badge-warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.quick-attendance-widget .badge-info {
+    background-color: #17a2b8;
+    color: #fff;
+}
+
+.quick-attendance-widget .table td {
+    vertical-align: middle;
+}
+
+.quick-attendance-widget .badge i {
+    margin-right: 4px;
+}
+CSS
 );
 ?>
 
