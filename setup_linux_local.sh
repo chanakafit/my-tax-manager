@@ -108,7 +108,8 @@ fi
 # Stop and remove existing containers
 echo ""
 echo "Stopping and removing existing containers..."
-docker container rm -f mb-php mb-nginx mb-mariadb mb-redis 2>/dev/null || true
+docker compose -p mb down 2>/dev/null || true
+docker container rm -f mb-php mb-nginx mb-mariadb mb-redis mb-phpmyadmin 2>/dev/null || true
 echo "✓ Containers removed"
 
 # Build Docker images

@@ -136,7 +136,8 @@ class TaxReturnController extends BaseController
                 // Save bank balances
                 if (isset($post['BankBalance'])) {
                     foreach ($post['BankBalance'] as $accountId => $data) {
-                        if (!empty($data['balance'])) {
+                        // Check if balance is set and is numeric (allows 0 as valid balance)
+                        if (isset($data['balance']) && is_numeric($data['balance'])) {
                             $submittedBankAccountIds[] = $accountId;
 
                             // Check if we're updating existing or creating new
@@ -183,7 +184,8 @@ class TaxReturnController extends BaseController
                 // Save liability balances
                 if (isset($post['LiabilityBalance'])) {
                     foreach ($post['LiabilityBalance'] as $liabilityId => $data) {
-                        if (!empty($data['outstanding_balance'])) {
+                        // Check if outstanding balance is set and is numeric (allows 0 as valid balance)
+                        if (isset($data['outstanding_balance']) && is_numeric($data['outstanding_balance'])) {
                             $balance = new TaxYearLiabilityBalance();
                             $balance->tax_year_snapshot_id = $snapshot->id;
                             $balance->liability_id = $liabilityId;
