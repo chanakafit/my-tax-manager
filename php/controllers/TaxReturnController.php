@@ -278,7 +278,7 @@ class TaxReturnController extends BaseController
         // 1. Generate Tax Return Excel file
         $spreadsheet = $this->generateExcelReport($year, $data);
         $writer = new Xlsx($spreadsheet);
-        $taxReturnFilename = "Tax_Return_{$year}_" . date('Y-m-d') . ".xlsx";
+        $taxReturnFilename = "Assets_liability_bank_summary_{$year}_" . date('Y-m-d') . ".xlsx";
         $taxReturnPath = $tempDir . '/' . $taxReturnFilename;
         $writer->save($taxReturnPath);
 
