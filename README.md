@@ -174,6 +174,9 @@ Upload statements (PDF/JPG/PNG, max 10MB) for each bank account. Download comple
 ### Tax Return Support Documents
 Upload additional supporting documents for tax return submissions (e.g., income statements, property documents, loan agreements). Supports PDF, DOC, DOCX, XLS, XLSX, PNG, JPG, JPEG (max 10MB per file). All uploaded documents are automatically included in the final ZIP package download under "Support_Documents" folder.
 
+### Capital Assets & Allowances
+Track business and personal capital assets with full manual control over capital allowances. No automatic allowances - you decide when to claim and at what percentage (0.01-100%). Written down value automatically updated after each allowance. Maximum 5 years per asset. Track percentage claimed each year, view historical allowances, and maintain accurate written down values for tax reporting.
+
 ---
 
 ## 🛠 Technology Stack

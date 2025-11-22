@@ -78,43 +78,113 @@ $this->params['breadcrumbs'][] = $this->title;
 
         <div class="col-md-6">
             <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h4 class="mb-0">Capital Allowances</h4>
+                <div class="card-header">
+                    <h4 class="mb-3">Capital Allowances</h4>
                     <?php if ($model->status === 'active' && count($allowances) < 5): ?>
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Original Asset Value:</strong> <?= Yii::$app->formatter->asCurrency($model->purchase_cost, 'LKR') ?> &nbsp;|&nbsp;
+                        <strong>Current Written Down Value:</strong> <?= Yii::$app->formatter->asCurrency($model->current_written_down_value, 'LKR') ?>
+                    </div>
                     <div>
                         <?php $nextYear = date('Y'); ?>
-                        <?= Html::beginForm(['calculate-allowance', 'id' => $model->id], 'post', ['class' => 'd-flex']); ?>
-                            <?= Html::dropDownList('taxYear', null,
-                                array_combine(range($nextYear-2, $nextYear), range($nextYear-2, $nextYear)),
-                                ['class' => 'form-control me-2', 'prompt' => 'Select Tax Year']
-                            ) ?>
-                            <?= Html::submitButton('Calculate Allowance', ['class' => 'btn btn-primary']) ?>
+                        <?= Html::beginForm(['calculate-allowance', 'id' => $model->id], 'post', ['class' => 'row g-2']); ?>
+                            <div class="col-md-4">
+                                <?= Html::dropDownList('taxYear', null,
+                                    array_combine(range($nextYear-2, $nextYear+1), range($nextYear-2, $nextYear+1)),
+                                    ['class' => 'form-control', 'prompt' => 'Select Tax Year']
+                                ) ?>
+                            </div>
+                            <div class="col-md-4">
+                                <?= Html::textInput('percentage', '20', [
+                                    'class' => 'form-control',
+                                    'placeholder' => 'Percentage (1-100)',
+                                    'type' => 'number',
+                                    'min' => '0.01',
+                                    'max' => '100',
+                                    'step' => '0.01',
+                                    'required' => true
+                                ]) ?>
+                                <small class="text-muted">% of original asset value (<?= Yii::$app->formatter->asCurrency($model->purchase_cost, 'LKR') ?>)</small>
+                            </div>
+                            <div class="col-md-4">
+                                <?= Html::submitButton('<i class="fas fa-calculator"></i> Add Allowance', ['class' => 'btn btn-primary w-100']) ?>
+                            </div>
                         <?= Html::endForm(); ?>
                     </div>
+                    <?php elseif (count($allowances) >= 5): ?>
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> Maximum 5 years of capital allowances have been claimed for this asset.
+                        </div>
                     <?php endif; ?>
                 </div>
                 <div class="card-body">
-                    <?= GridView::widget([
-                        'dataProvider' => new ArrayDataProvider([
-                            'allModels' => $allowances,
-                            'pagination' => false,
-                        ]),
-                        'columns' => [
-                            'tax_year',
-                            'year_number',
-                            [
-                                'attribute' => 'allowance_amount',
-                                'format' => ['decimal', 2],
-                                'contentOptions' => ['class' => 'text-end'],
+                    <?php if (empty($allowances)): ?>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> No capital allowances have been added yet. Use the form above to add your first allowance.
+                        </div>
+                    <?php else: ?>
+                        <?= GridView::widget([
+                            'dataProvider' => new ArrayDataProvider([
+                                'allModels' => $allowances,
+                                'pagination' => false,
+                            ]),
+                            'columns' => [
+                                'tax_year',
+                                [
+                                    'attribute' => 'year_number',
+                                    'label' => 'Year',
+                                    'contentOptions' => ['class' => 'text-center'],
+                                ],
+                                [
+                                    'attribute' => 'percentage_claimed',
+                                    'label' => '% Claimed',
+                                    'format' => 'raw',
+                                    'contentOptions' => ['class' => 'text-center'],
+                                    'value' => function($model) {
+                                        $percentage = $model->percentage_claimed ? $model->percentage_claimed : 20.0;
+                                        return number_format($percentage, 2) . '%';
+                                    },
+                                ],
+                                [
+                                    'attribute' => 'allowance_amount',
+                                    'label' => 'Allowance',
+                                    'format' => ['decimal', 2],
+                                    'contentOptions' => ['class' => 'text-end'],
+                                    'footer' => '<strong>Total: ' . Yii::$app->formatter->asCurrency(array_sum(array_column($allowances, 'allowance_amount')), 'LKR') . '</strong>',
+                                    'footerOptions' => ['class' => 'text-end'],
+                                ],
+                                [
+                                    'attribute' => 'written_down_value',
+                                    'label' => 'Written Down Value',
+                                    'format' => ['decimal', 2],
+                                    'contentOptions' => ['class' => 'text-end'],
+                                    'footer' => '<strong>Current: ' . Yii::$app->formatter->asCurrency($model->current_written_down_value, 'LKR') . '</strong>',
+                                    'footerOptions' => ['class' => 'text-end'],
+                                ],
+                                [
+                                    'class' => 'yii\grid\ActionColumn',
+                                    'template' => '{delete}',
+                                    'header' => 'Actions',
+                                    'buttons' => [
+                                        'delete' => function ($url, $model, $key) {
+                                            return Html::a('<i class="fas fa-trash"></i>',
+                                                ['delete-allowance', 'id' => $model->id],
+                                                [
+                                                    'class' => 'btn btn-sm btn-danger',
+                                                    'title' => 'Delete Allowance',
+                                                    'data-confirm' => 'Are you sure you want to delete this capital allowance? This will recalculate all subsequent allowances and the written down value.',
+                                                    'data-method' => 'post',
+                                                ]
+                                            );
+                                        },
+                                    ],
+                                    'contentOptions' => ['class' => 'text-center'],
+                                ],
                             ],
-                            [
-                                'attribute' => 'written_down_value',
-                                'format' => ['decimal', 2],
-                                'contentOptions' => ['class' => 'text-end'],
-                            ],
-                        ],
-                        'showFooter' => true,
-                    ]); ?>
+                            'showFooter' => true,
+                        ]); ?>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

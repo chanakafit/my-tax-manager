@@ -37,6 +37,14 @@ class CapitalAsset extends BaseModel
             ['current_written_down_value', 'default', 'value' => function ($model) {
                 return $model->purchase_cost;
             }],
+            // Disposal date required when status is disposed
+            ['disposal_date', 'required', 'when' => function($model) {
+                return $model->status === 'disposed';
+            }, 'whenClient' => "function (attribute, value) {
+                return $('#capitalasset-status').val() === 'disposed';
+            }"],
+            // Disposal value should be a number when provided
+            ['disposal_value', 'number', 'min' => 0],
         ];
     }
 
@@ -66,7 +74,14 @@ class CapitalAsset extends BaseModel
         return $this->hasMany(CapitalAllowance::class, ['capital_asset_id' => 'id']);
     }
 
-    public function calculateAllowance($taxYear)
+    /**
+     * Calculate capital allowance for a given tax year with custom percentage
+     *
+     * @param string $taxYear The tax year (e.g., '2024')
+     * @param float $percentage The percentage of original asset value (purchase cost) to claim (1-100)
+     * @return CapitalAllowance|null The calculated allowance or null if not eligible
+     */
+    public function calculateAllowance($taxYear, $percentage = 20.0)
     {
         // Only business assets are eligible for capital allowance
         if ($this->asset_type !== 'business') {
@@ -90,14 +105,15 @@ class CapitalAsset extends BaseModel
         }
 
         $allowance->year_number = $yearNumber;
-        $allowance->allowance_amount = $this->purchase_cost * 0.2; // 20% per year
+        $allowance->percentage_claimed = $percentage;
 
-        // Calculate written down value
+        // Calculate allowance based on ORIGINAL ASSET VALUE (purchase cost) and custom percentage
+        $allowance->allowance_amount = $this->purchase_cost * ($percentage / 100);
+
+        // Calculate new written down value (previous WDV minus this allowance)
         $previousWrittenDownValue = $this->current_written_down_value;
         $allowance->written_down_value = $previousWrittenDownValue - $allowance->allowance_amount;
 
-        // Update asset's current written down value
-        $this->current_written_down_value = $allowance->written_down_value;
 
         return $allowance;
     }

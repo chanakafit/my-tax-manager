@@ -13,7 +13,7 @@ echo ""
 # Navigate to project directory
 cd /Users/chana/Bee48/my-tax-manager
 
-# Function to wait for container to be healthy/running
+# Function to wait for container to be running
 wait_for_container() {
     local container_name=$1
     local max_wait=60
@@ -22,49 +22,139 @@ wait_for_container() {
     echo "Waiting for container $container_name to be ready..."
     while [ $waited -lt $max_wait ]; do
         local status=$(docker inspect --format='{{.State.Status}}' $container_name 2>/dev/null || echo "not_found")
-        local health=$(docker inspect --format='{{.State.Health.Status}}' $container_name 2>/dev/null || echo "none")
 
         if [ "$status" = "running" ]; then
-            if [ "$health" = "healthy" ] || [ "$health" = "none" ]; then
-                echo "✓ Container $container_name is ready"
+            # Check if container has health check
+            local has_health=$(docker inspect --format='{{if .State.Health}}yes{{else}}no{{end}}' $container_name 2>/dev/null)
+
+            if [ "$has_health" = "no" ]; then
+                # No health check - container is ready when running
+                echo "✓ Container $container_name is running"
                 return 0
+            else
+                # Has health check - wait for healthy
+                local health=$(docker inspect --format='{{.State.Health.Status}}' $container_name 2>/dev/null)
+                if [ "$health" = "healthy" ]; then
+                    echo "✓ Container $container_name is healthy"
+                    return 0
+                fi
+
+                # Show progress every 10 seconds
+                if [ $((waited % 10)) -eq 0 ] && [ $waited -gt 0 ]; then
+                    echo "Container $container_name health: $health (waited ${waited}s)..."
+                fi
             fi
+        else
+            echo "Container $container_name status: $status, waiting..."
         fi
 
-        echo "Container status: $status (health: $health), waiting..."
         sleep 2
         waited=$((waited + 2))
     done
 
-    echo "✗ Timeout waiting for container $container_name"
+    echo "✗ Timeout waiting for container $container_name after ${max_wait}s"
+    echo "Container logs:"
+    docker logs $container_name --tail 30
     return 1
 }
 
 # Stop any existing containers to ensure clean state
 echo "Stopping existing containers..."
 docker compose -p mb down 2>/dev/null || true
+
+# Remove any orphaned containers that might be holding ports
+echo "Cleaning up orphaned containers..."
+docker container prune -f 2>/dev/null || true
+
+# Kill any processes that might be using port 80
+echo "Checking for port conflicts..."
+if lsof -i :80 -sTCP:LISTEN -t >/dev/null 2>&1; then
+    echo "Warning: Port 80 is in use. Attempting to free it..."
+    # Try to stop any docker containers using port 80
+    for container in $(docker ps -q); do
+        if docker port "$container" 2>/dev/null | grep -q ":80"; then
+            echo "Stopping container $container using port 80..."
+            docker stop "$container" 2>/dev/null || true
+        fi
+    done
+fi
+
 sleep 2
 
 # Start containers
 echo "Starting Docker containers..."
 docker compose -p mb up -d
 
-# Wait for each critical container
-wait_for_container "mb-mariadb"
-wait_for_container "mb-php"
-wait_for_container "mb-redis"
+# Give containers a moment to start
+sleep 5
 
-# Additional wait for MariaDB to be fully ready
+# Wait for critical containers to be running (skip health checks for faster startup)
+echo "Checking if containers are running..."
+for container in mb-mariadb mb-redis mb-nginx; do
+    wait_for_container "$container"
+done
+
+# For PHP container, just verify it's running and can execute commands
+echo "Waiting for mb-php container..."
+max_wait=30
+waited=0
+while [ $waited -lt $max_wait ]; do
+    if docker exec mb-php php --version &>/dev/null; then
+        echo "✓ PHP container is ready and can execute commands"
+        break
+    fi
+    if [ $waited -gt 0 ] && [ $((waited % 10)) -eq 0 ]; then
+        echo "Waiting for PHP to be ready (${waited}s)..."
+    fi
+    sleep 2
+    waited=$((waited + 2))
+done
+
+if [ $waited -ge $max_wait ]; then
+    echo "✗ PHP container not responding"
+    docker logs mb-php --tail 30
+    exit 1
+fi
+
+# Give services additional time to initialize after containers are running
+echo "Waiting for services to initialize..."
+sleep 5
+
+# Now verify database connectivity
+# Now verify database connectivity using PHP
 echo "Verifying database connectivity..."
-max_attempts=30
+max_attempts=15
 attempt=0
-until docker exec mb-php mysql -h mariadb -uroot -pmauFJcuf5dhRMQrjj -e "SELECT 1" &>/dev/null; do
+
+# Create a test PHP script to check database connection
+until docker exec mb-php php -r "
+try {
+    \$pdo = new PDO('mysql:host=mariadb;dbname=mybs', 'root', 'mauFJcuf5dhRMQrjj');
+    echo 'Connected';
+    exit(0);
+} catch (Exception \$e) {
+    exit(1);
+}
+" &>/dev/null; do
     attempt=$((attempt + 1))
     if [ $attempt -ge $max_attempts ]; then
-        echo "✗ Database connection timeout"
+        echo "✗ Database connection timeout after $max_attempts attempts"
+        echo "Checking if database is accessible..."
+        docker exec mb-php php -r "
+        try {
+            \$pdo = new PDO('mysql:host=mariadb;dbname=mybs', 'root', 'mauFJcuf5dhRMQrjj');
+            echo 'Database connected successfully\n';
+        } catch (Exception \$e) {
+            echo 'Database error: ' . \$e->getMessage() . '\n';
+        }
+        "
+        echo "MariaDB container logs:"
+        docker logs mb-mariadb --tail 20
         exit 1
     fi
-    echo "Attempting database connection ($attempt/$max_attempts)..."
+    if [ $((attempt % 5)) -eq 0 ]; then
+        echo "Attempting database connection ($attempt/$max_attempts)..."
+    fi
     sleep 2
 done
 echo "✓ Database is ready!"
