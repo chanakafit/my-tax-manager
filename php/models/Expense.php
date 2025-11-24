@@ -50,6 +50,37 @@ class Expense extends BaseModel
     public $tax_rate;
 
     /**
+     * Store expense date before deletion for dependent operations
+     * @var string
+     */
+    private $_expenseDateBeforeDelete;
+
+    /**
+     * {@inheritdoc}
+     */
+    public function init()
+    {
+        parent::init();
+
+        // Attach event handlers for tax recalculation
+        $this->on(self::EVENT_AFTER_INSERT, function ($event) {
+            try {
+                \app\models\TaxRecord::recalculateForDate($this->expense_date);
+            } catch (\Exception $e) {
+                Yii::error("Failed to trigger tax recalculation after expense insert: " . $e->getMessage(), __METHOD__);
+            }
+        });
+
+        $this->on(self::EVENT_AFTER_UPDATE, function ($event) {
+            try {
+                \app\models\TaxRecord::recalculateForDate($this->expense_date);
+            } catch (\Exception $e) {
+                Yii::error("Failed to trigger tax recalculation after expense update: " . $e->getMessage(), __METHOD__);
+            }
+        });
+    }
+
+    /**
      * {@inheritdoc}
      */
     public static function tableName()
@@ -204,5 +235,38 @@ class Expense extends BaseModel
     public function getUpdatedBy(): \yii\db\ActiveQuery
     {
         return $this->hasOne(User::class, ['id' => 'updated_by']);
+    }
+
+
+    /**
+     * {@inheritdoc}
+     */
+    public function beforeDelete()
+    {
+        if (!parent::beforeDelete()) {
+            return false;
+        }
+
+        // Store expense date for afterDelete
+        $this->_expenseDateBeforeDelete = $this->expense_date;
+
+        return true;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function afterDelete()
+    {
+        parent::afterDelete();
+
+        // Trigger tax recalculation in TaxRecord
+        if ($this->_expenseDateBeforeDelete) {
+            try {
+                \app\models\TaxRecord::recalculateForDate($this->_expenseDateBeforeDelete);
+            } catch (\Exception $e) {
+                Yii::error("Failed to trigger tax recalculation from Expense afterDelete: " . $e->getMessage(), __METHOD__);
+            }
+        }
     }
 }

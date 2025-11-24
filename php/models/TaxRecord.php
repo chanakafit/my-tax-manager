@@ -39,6 +39,7 @@ class TaxRecord extends BaseModel
     const TYPE_PAYROLL = 'Payroll Tax';
     const EVENT_AFTER_TAX_PAYMENT = 'afterTaxPayment';
 
+
     /**
      * {@inheritdoc}
      */
@@ -397,5 +398,71 @@ class TaxRecord extends BaseModel
             'expenses' => Expense::find()->where(['id' => $expenseIds])->orderBy(['expense_date' => SORT_ASC])->all(),
             'paysheets' => Paysheet::find()->where(['id' => $paysheetIds])->orderBy(['payment_date' => SORT_ASC])->all(),
         ];
+    }
+
+    /**
+     * Recalculate tax for the period containing the given date
+     * Called by models (Expense, Invoice, Paysheet, etc.) after save/delete
+     * @param string $date Date in Y-m-d format
+     */
+     public static function recalculateForDate($date)
+    {
+        try {
+            // Determine tax code based on date
+            $timestamp = strtotime($date);
+            $year = (int)date('Y', $timestamp);
+            $month = (int)date('n', $timestamp);
+
+            // Sri Lankan tax year is April to March
+            // If date is Jan-Mar, it belongs to previous fiscal year
+            $taxYear = ($month >= 4) ? $year : ($year - 1);
+
+            // Determine quarter: Q1 (Apr-Jun), Q2 (Jul-Sep), Q3 (Oct-Dec), Q4 (Jan-Mar)
+            $quarter = null;
+            if ($month >= 4 && $month <= 6) {
+                $quarter = '1'; // Q1: Apr-Jun
+            } elseif ($month >= 7 && $month <= 9) {
+                $quarter = '2'; // Q2: Jul-Sep
+            } elseif ($month >= 10 && $month <= 12) {
+                $quarter = '3'; // Q3: Oct-Dec
+            } elseif ($month >= 1 && $month <= 3) {
+                $quarter = '4'; // Q4: Jan-Mar
+            }
+
+            $taxCodesToRecalculate = [];
+
+            // Add quarterly tax code if determined
+            if ($quarter) {
+                $taxCodesToRecalculate[] = $taxYear . $quarter;
+            }
+
+            // Add final annual tax code
+            $taxCodesToRecalculate[] = $taxYear . '0';
+
+            // Recalculate all relevant tax records
+            foreach ($taxCodesToRecalculate as $taxCode) {
+                $taxRecord = static::find()
+                    ->where(['tax_code' => $taxCode])
+                    ->one();
+
+                if ($taxRecord) {
+                    // Only recalculate if not paid yet
+                    if ($taxRecord->payment_status !== 'paid') {
+                        if ($taxRecord->calculateTax()) {
+                            Yii::info("Tax recalculated for period {$taxCode} due to data change", __METHOD__);
+                        } else {
+                            Yii::warning("Failed to recalculate tax for period {$taxCode}: " . json_encode($taxRecord->errors), __METHOD__);
+                        }
+                    } else {
+                        Yii::info("Skipped tax recalculation for period {$taxCode} - already paid", __METHOD__);
+                    }
+                } else {
+                    Yii::info("No tax record found for period {$taxCode} - skipping recalculation", __METHOD__);
+                }
+            }
+        } catch (\Exception $e) {
+            // Log but don't fail the operation
+            Yii::error("Failed to recalculate tax: " . $e->getMessage(), __METHOD__);
+        }
     }
 }

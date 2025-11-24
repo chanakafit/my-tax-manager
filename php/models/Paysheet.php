@@ -34,6 +34,36 @@ class Paysheet extends BaseModel
     const STATUS_PAID = 'paid';
     const STATUS_PENDING = 'pending';
 
+    /**
+     * Store payment date before deletion for tax recalculation
+     * @var string
+     */
+    private $_paymentDateBeforeDelete;
+
+    /**
+     * {@inheritdoc}
+     */
+    public function init()
+    {
+        parent::init();
+
+        // Attach event handlers for tax recalculation
+        $this->on(self::EVENT_AFTER_INSERT, function ($event) {
+            try {
+                \app\models\TaxRecord::recalculateForDate($this->payment_date);
+            } catch (\Exception $e) {
+                Yii::error("Failed to trigger tax recalculation after paysheet insert: " . $e->getMessage(), __METHOD__);
+            }
+        });
+
+        $this->on(self::EVENT_AFTER_UPDATE, function ($event) {
+            try {
+                \app\models\TaxRecord::recalculateForDate($this->payment_date);
+            } catch (\Exception $e) {
+                Yii::error("Failed to trigger tax recalculation after paysheet update: " . $e->getMessage(), __METHOD__);
+            }
+        });
+    }
 
     /**
      * {@inheritdoc}
@@ -107,6 +137,39 @@ class Paysheet extends BaseModel
     public function getFinancialTransactions()
     {
         return $this->hasMany(FinancialTransaction::class, ['related_paysheet_id' => 'id']);
+    }
+
+
+    /**
+     * {@inheritdoc}
+     */
+    public function beforeDelete()
+    {
+        if (!parent::beforeDelete()) {
+            return false;
+        }
+
+        // Store payment date for afterDelete
+        $this->_paymentDateBeforeDelete = $this->payment_date;
+
+        return true;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function afterDelete()
+    {
+        parent::afterDelete();
+
+        // Trigger tax recalculation in TaxRecord
+        if ($this->_paymentDateBeforeDelete) {
+            try {
+                \app\models\TaxRecord::recalculateForDate($this->_paymentDateBeforeDelete);
+            } catch (\Exception $e) {
+                Yii::error("Failed to trigger tax recalculation from Paysheet afterDelete: " . $e->getMessage(), __METHOD__);
+            }
+        }
     }
 
 }

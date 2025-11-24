@@ -40,6 +40,37 @@ class Invoice extends BaseModel
     public $reference_number; // For payment reference
 
     /**
+     * Store invoice date before deletion for tax recalculation
+     * @var string
+     */
+    private $_invoiceDateBeforeDelete;
+
+    /**
+     * {@inheritdoc}
+     */
+    public function init()
+    {
+        parent::init();
+
+        // Attach event handlers for tax recalculation
+        $this->on(self::EVENT_AFTER_INSERT, function ($event) {
+            try {
+                \app\models\TaxRecord::recalculateForDate($this->invoice_date);
+            } catch (\Exception $e) {
+                Yii::error("Failed to trigger tax recalculation after invoice insert: " . $e->getMessage(), __METHOD__);
+            }
+        });
+
+        $this->on(self::EVENT_AFTER_UPDATE, function ($event) {
+            try {
+                \app\models\TaxRecord::recalculateForDate($this->invoice_date);
+            } catch (\Exception $e) {
+                Yii::error("Failed to trigger tax recalculation after invoice update: " . $e->getMessage(), __METHOD__);
+            }
+        });
+    }
+
+    /**
      * {@inheritdoc}
      */
     public static function tableName()
@@ -264,5 +295,38 @@ class Invoice extends BaseModel
     public function getUpdatedBy(): \yii\db\ActiveQuery
     {
         return $this->hasOne(User::class, ['id' => 'updated_by']);
+    }
+
+
+    /**
+     * {@inheritdoc}
+     */
+    public function beforeDelete()
+    {
+        if (!parent::beforeDelete()) {
+            return false;
+        }
+
+        // Store invoice date for afterDelete
+        $this->_invoiceDateBeforeDelete = $this->invoice_date;
+
+        return true;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function afterDelete()
+    {
+        parent::afterDelete();
+
+        // Trigger tax recalculation in TaxRecord
+        if ($this->_invoiceDateBeforeDelete) {
+            try {
+                \app\models\TaxRecord::recalculateForDate($this->_invoiceDateBeforeDelete);
+            } catch (\Exception $e) {
+                Yii::error("Failed to trigger tax recalculation from Invoice afterDelete: " . $e->getMessage(), __METHOD__);
+            }
+        }
     }
 }

@@ -96,6 +96,7 @@ class ExpenseController extends BaseController
                 }
 
                 $dbTransaction->commit();
+
                 return $this->redirect(['view', 'id' => $model->id]);
 
             } catch (\Exception $e) {
@@ -218,6 +219,7 @@ class ExpenseController extends BaseController
                 }
 
                 $dbTransaction->commit();
+
                 return $this->redirect(['view', 'id' => $model->id]);
 
             } catch (\Exception $e) {
@@ -232,5 +234,45 @@ class ExpenseController extends BaseController
             'categories' => ArrayHelper::map(ExpenseCategory::find()->all(), 'id', 'name'),
             'vendorName' => $model->vendor ? $model->vendor->name : '',
         ]);
+    }
+
+    /**
+     * Delete an expense and its related financial transaction
+     * @param int $id
+     * @return \yii\web\Response
+     * @throws NotFoundHttpException
+     * @throws \Throwable
+     * @throws \yii\db\StaleObjectException
+     */
+    public function actionDelete($id)
+    {
+        $model = $this->findModel($id);
+
+        $dbTransaction = Yii::$app->db->beginTransaction();
+        try {
+            // Delete related financial transaction first
+            $transaction = FinancialTransaction::findOne(['related_expense_id' => $model->id]);
+            if ($transaction) {
+                if (!$transaction->delete()) {
+                    throw new \Exception('Failed to delete related financial transaction');
+                }
+            }
+
+            // Delete the expense (will trigger tax recalculation via model event)
+            if (!$model->delete()) {
+                throw new \Exception('Failed to delete expense');
+            }
+
+            $dbTransaction->commit();
+
+
+            Yii::$app->session->setFlash('success', 'Expense deleted successfully.');
+        } catch (\Exception $e) {
+            $dbTransaction->rollBack();
+            Yii::error("Failed to delete expense: " . $e->getMessage());
+            Yii::$app->session->setFlash('error', 'Failed to delete expense: ' . $e->getMessage());
+        }
+
+        return $this->redirect(['index']);
     }
 }
