@@ -104,6 +104,14 @@ class SystemConfig extends BaseModel
 
         $config = self::findOne(['config_key' => $key]);
 
+        // If not found, try alternate naming conventions (camelCase <-> snake_case)
+        if (!$config) {
+            $alternateKey = self::alternateKeyName($key);
+            if ($alternateKey && $alternateKey !== $key) {
+                $config = self::findOne(['config_key' => $alternateKey]);
+            }
+        }
+
         if (!$config) {
             return $default;
         }
@@ -114,6 +122,28 @@ class SystemConfig extends BaseModel
         self::$_cache[$key] = $value;
 
         return $value;
+    }
+
+    /**
+     * Generate an alternate key name by converting between snake_case and camelCase
+     *
+     * @param string $key
+     * @return string|null
+     */
+    private static function alternateKeyName(string $key): ?string
+    {
+        // If key contains underscore, convert to camelCase
+        if (strpos($key, '_') !== false) {
+            return lcfirst(str_replace(' ', '', ucwords(str_replace('_', ' ', $key))));
+        }
+
+        // Otherwise, convert camelCase to snake_case
+        $snake = strtolower(preg_replace('/([a-z0-9])([A-Z])/', '$1_$2', $key));
+        if ($snake !== $key) {
+            return $snake;
+        }
+
+        return null;
     }
 
     /**
@@ -290,6 +320,60 @@ class SystemConfig extends BaseModel
      */
     public static function getBankingDetails(): array
     {
+        // Check for a composite banking details entry first (may be stored as JSON)
+        $composite = self::get('banking_details', null);
+        if ($composite === null) {
+            $composite = self::get('bankingDetails', null);
+        }
+
+        $defaults = [
+            'swiftCode' => '',
+            'bankName' => '',
+            'branchName' => '',
+            'bankCode' => '',
+            'branchCode' => '',
+            'bankAddress' => '',
+            'accountName' => '',
+            'accountNumber' => '',
+        ];
+
+        if (is_array($composite) && !empty($composite)) {
+            // Normalize keys in composite (support snake_case and camelCase)
+            $normalized = [];
+            foreach ($composite as $k => $v) {
+                $key = $k;
+                // convert snake_case keys to camelCase mapping used here
+                if (strpos($k, '_') !== false) {
+                    $key = lcfirst(str_replace(' ', '', ucwords(str_replace('_', ' ', $k))));
+                }
+                $normalized[$key] = $v;
+            }
+
+            // Merge normalized composite with defaults
+            return array_merge($defaults, array_intersect_key($normalized, $defaults) + $defaults);
+        }
+
+        // If composite is a JSON string, try decoding
+        if (is_string($composite) && !empty($composite)) {
+            try {
+                $decoded = Json::decode($composite);
+                if (is_array($decoded)) {
+                    $normalized = [];
+                    foreach ($decoded as $k => $v) {
+                        $key = $k;
+                        if (strpos($k, '_') !== false) {
+                            $key = lcfirst(str_replace(' ', '', ucwords(str_replace('_', ' ', $k))));
+                        }
+                        $normalized[$key] = $v;
+                    }
+                    return array_merge($defaults, array_intersect_key($normalized, $defaults) + $defaults);
+                }
+            } catch (\Throwable $e) {
+                // ignore decode errors and fall back to individual keys
+            }
+        }
+
+        // Fallback to individual config keys
         return [
             'swiftCode' => self::get('bank_swift_code', ''),
             'bankName' => self::get('bank_name', ''),
@@ -320,4 +404,3 @@ class SystemConfig extends BaseModel
         self::clearCache();
     }
 }
-

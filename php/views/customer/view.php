@@ -1,4 +1,8 @@
 <?php
+/**
+ * @var yii\web\View $this
+ * @var app\models\Customer $model
+ */
 use yii\helpers\Html;
 use yii\widgets\DetailView;
 use app\widgets\BGridView as GridView;
@@ -34,6 +38,7 @@ $this->params['breadcrumbs'][] = $this->title;
             'state',
             'postal_code',
             'country',
+            'registry_code',
             'tax_number',
             'notes:ntext',
             [

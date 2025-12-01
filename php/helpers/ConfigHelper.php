@@ -21,13 +21,17 @@ class ConfigHelper
      */
     public static function get(string $key, $default = null)
     {
-        // Check if it exists in params.php first
-        if (isset(Yii::$app->params[$key])) {
-            return Yii::$app->params[$key];
+        // Prefer database-backed configuration (SystemConfig) first.
+        // If not present in DB (null), fall back to params.php.
+        // Note: SystemConfig::get returns $default when not found, so we request null
+        // to detect absence distinctly.
+        $dbValue = SystemConfig::get($key, null);
+        if ($dbValue !== null) {
+            return $dbValue;
         }
 
-        // Fall back to database
-        return SystemConfig::get($key, $default);
+        // Fallback to params.php or provided default
+        return Yii::$app->params[$key] ?? $default;
     }
 
     /**
@@ -221,7 +225,17 @@ class ConfigHelper
      */
     public static function getSignatureImage(string $default = ''): string
     {
-        return SystemConfig::get('signatureImage', $default);
+        $value = SystemConfig::get('signatureImage', $default);
+        if (empty($value)) {
+            return '';
+        }
+
+        // Normalize path: ensure it starts with a slash unless it's a full URL
+        if (strpos($value, '/') !== 0 && stripos($value, 'http') !== 0) {
+            $value = '/' . $value;
+        }
+
+        return $value;
     }
 
     /**

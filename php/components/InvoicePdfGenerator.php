@@ -7,6 +7,7 @@ use Yii;
 use app\models\Invoice;
 use yii\base\Component;
 use kartik\mpdf\Pdf;
+use yii\helpers\Html;
 
 class InvoicePdfGenerator extends Component
 {
@@ -223,6 +224,9 @@ class InvoicePdfGenerator extends Component
         $customer = $invoice->customer;
         $bankingDetails = ConfigHelper::getBankingDetails();
         $businessAddress = ConfigHelper::getBusinessAddress();
+        // Use generic ConfigHelper::get to read business registry and VAT keys (supports snake_case and camelCase via SystemConfig)
+        $businessRegistry = ConfigHelper::get('business_registry_code', '') ?: ConfigHelper::get('businessRegistryCode', '');
+        $businessVat = ConfigHelper::get('business_vat_number', '') ?: ConfigHelper::get('businessVatNumber', '');
 
         $html = '
         <table class="header-table">
@@ -230,12 +234,14 @@ class InvoicePdfGenerator extends Component
                 <td width="50%">
                     <div class="org-name">' . ConfigHelper::getBusinessName() . '</div>
                     <div class="org-details">
+                        ' . (!empty($businessRegistry) ? ('<strong>Registry code</strong>: ' . Html::encode($businessRegistry) . '<br>') : '') . '
+                        ' . (!empty($businessVat) ? ('<strong>Vat number</strong>: ' . Html::encode($businessVat) . '<br>') : '') . '
                         ' . nl2br($businessAddress['line1']) . '<br>
                         ' . nl2br($businessAddress['line2']) . '<br>
                         ' . $businessAddress['city'] . ' ' . $businessAddress['postalCode'] . '<br>
                         ' . $businessAddress['province'] . '<br>
                         SriLanka
-                    </div>
+                     </div>
                 </td>
                 <td width="50%" class="text-right">
                     <div class="entity-title">INVOICE</div>
@@ -251,10 +257,12 @@ class InvoicePdfGenerator extends Component
         <div class="bill-to-section">
             <div class="bill-to-label">Bill To</div>
             <div class="customer-details">
-                <strong>' . $customer->company_name . '</strong><br>
-                ' . nl2br($customer->address ?? '') . '<br>
-                ' . $customer->city . ($customer->state ? ', ' . $customer->state : '') . ' ' . $customer->postal_code . '<br>
-                ' . $customer->country . '
+                <strong>' . Html::encode($customer->company_name) . '</strong><br>
+                ' . (!empty($customer->registry_code) ? ('<div><strong>Registry code:</strong> ' . Html::encode($customer->registry_code) . '</div>') : '') . '
+                ' . (!empty($customer->tax_number) ? ('<div><strong>Vat number:</strong> ' . Html::encode($customer->tax_number) . '</div>') : '') . '
+                ' . nl2br(Html::encode($customer->address ?? '')) . '<br>
+                ' . Html::encode($customer->city) . ($customer->state ? ', ' . Html::encode($customer->state) : '') . ' ' . Html::encode($customer->postal_code) . '<br>
+                ' . Html::encode($customer->country) . '
             </div>
         </div>
 
@@ -389,12 +397,12 @@ class InvoicePdfGenerator extends Component
             <table width="100%">
                 <tr>
                     <td width="240" style="text-align: left;">';
-
+        
         $signatureImage = ConfigHelper::getSignatureImage();
         if ($signatureImage) {
             $html .= '<img src="' . Yii::getAlias('@app/web') . $signatureImage . '" style="height: 50px; margin-bottom: 5px;"><br>';
         }
-
+        
         $html .= '
                         <div style="border-bottom: 1px solid #718096;"></div>
                         <div class="signature-name">' . ConfigHelper::getSignatureName() . '</div>

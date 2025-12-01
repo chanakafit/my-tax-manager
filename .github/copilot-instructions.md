@@ -120,42 +120,28 @@ class ExampleModel extends BaseModel
 - ✅ Console commands
 - ✅ Status workflows and calculations
 
-### **ALWAYS use fixtures for database tests:**
-- ✅ Use **ActiveFixture** for consistent, reusable test data
-- ✅ Create **practical dummy data** with Sri Lankan context (realistic names, addresses, phone formats)
-- ✅ Define **fixture dependencies** for related models (foreign keys)
-- ✅ **Never manually create** test data in `_before()` method
-- ✅ Use **meaningful fixture keys** like `john_doe`, `electricity_jan`, `invoice_2025_001`
-- ✅ Include **edge cases** in fixtures (inactive, left, cancelled, foreign currency)
-- ✅ Reference: See `tests/FIXTURES.md` for complete guide
-
-### **Test Structure with Fixtures**
+### **Test Structure**
 ```php
 <?php
 namespace tests\unit\models;
 
 use app\models\ExampleModel;
 use Codeception\Test\Unit;
-use tests\fixtures\ExampleFixture;
-use tests\fixtures\RelatedFixture;
 
 class ExampleModelTest extends Unit
 {
     protected $tester;
     
-    /**
-     * Load fixtures before each test
-     */
-    public function _fixtures()
+    protected function _before()
     {
-        return [
-            'examples' => [
-                'class' => ExampleFixture::class,
-            ],
-            'related' => [
-                'class' => RelatedFixture::class,
-            ],
-        ];
+        parent::_before();
+        // Setup code
+    }
+    
+    protected function _after()
+    {
+        parent::_after();
+        // Cleanup code
     }
     
     public function testValidation()
@@ -168,93 +154,31 @@ class ExampleModelTest extends Unit
         verify($model->validate())->true();
     }
     
-    public function testWithFixtureData()
+    public function testSaveRecord()
     {
-        // Access fixture data
-        $example = $this->tester->grabFixture('examples', 'fixture_key');
-        
-        verify($example)->notNull();
-        verify($example->name)->equals('Expected Name');
-        verify($example->id)->notNull();
+        $model = new ExampleModel(['name' => 'Test']);
+        verify($model->save())->true();
+        verify($model->id)->notNull();
     }
     
     public function testRelationship()
     {
-        $example = $this->tester->grabFixture('examples', 'fixture_key');
-        
-        verify($example->relatedModel)->notNull();
-        verify($example->relatedModel)->instanceOf(RelatedModel::class);
-        verify($example->relatedModel->name)->equals('Related Name');
+        $model = ExampleModel::findOne(1);
+        verify($model->relatedModel)->notNull();
+        verify($model->relatedModel)->instanceOf(RelatedModel::class);
     }
 }
 ```
 
-### **Fixture Creation Pattern**
-
-**Step 1: Create Fixture Class** (`tests/fixtures/ExampleFixture.php`)
-```php
-<?php
-namespace tests\fixtures;
-
-use yii\test\ActiveFixture;
-
-class ExampleFixture extends ActiveFixture
-{
-    public $modelClass = 'app\models\Example';
-    public $dataFile = '@tests/_data/example.php';
-    
-    // Optional: Define dependencies
-    public $depends = [
-        'tests\fixtures\RelatedFixture',
-    ];
-}
-```
-
-**Step 2: Create Data File** (`tests/_data/example.php`)
-```php
-<?php
-return [
-    'john_doe' => [  // Meaningful key
-        'first_name' => 'John',
-        'last_name' => 'Doe',
-        'nic' => '199012345678',  // Valid Sri Lankan NIC
-        'phone' => '0771234567',  // Valid Sri Lankan phone
-        'email' => 'john.doe@company.com',
-        'position' => 'Software Engineer',
-        'department' => 'IT',
-        'status' => 'active',
-        'created_at' => 1700000000,
-        'updated_at' => 1700000000,
-        'created_by' => 1,
-        'updated_by' => 1,
-    ],
-    'inactive_user' => [  // Edge case
-        'first_name' => 'Inactive',
-        'status' => 'inactive',
-        // ...
-    ],
-];
-```
-
 ### **Testing Best Practices**
 - Use **Codeception 5.x** syntax: `verify($value)->true()` (not `$this->assertTrue()`)
-- Use **fixtures** for all database-related tests
 - Test **both success and failure scenarios**
-- Test **edge cases** and boundary conditions (use edge case fixtures)
+- Test **edge cases** and boundary conditions
 - Use **descriptive test method names**: `testCalculateTotalWithDiscount()`
-- **Never manually create** data in `_before()` - use fixtures instead
-- **Never manually delete** data in `_after()` - fixtures auto-cleanup
-- Test **relationships** using fixture data: `$this->tester->grabFixture('employees', 'john_doe')`
+- Create test data in `_before()` and clean up in `_after()`
+- Detach behaviors if needed: `$model->detachBehaviors()`
 - Aim for **70%+ code coverage** on new features
 - Run tests **before committing**: `docker exec mb-php ./vendor/bin/codecept run unit`
-
-### **Practical Dummy Data Guidelines**
-1. ✅ **Sri Lankan Context**: Use realistic Sri Lankan names (Fernando, Perera, Silva), addresses (Colombo 03, Galle Road), phone formats (0112345678)
-2. ✅ **Varied Data**: Different departments (IT, Finance, Marketing), positions, statuses
-3. ✅ **Edge Cases**: Include inactive/left employees, cancelled invoices, foreign currencies
-4. ✅ **Meaningful Keys**: Use descriptive keys like `john_doe`, `electricity_jan`, `invoice_2025_001`
-5. ✅ **Realistic Amounts**: Use practical Sri Lankan Rupee amounts (25000, 150000, etc.)
-6. ✅ **Multiple Scenarios**: Cover LKR/USD currencies, paid/pending statuses, recurring/one-time flags
 
 ### **Codeception 5.x Verify Methods**
 ```php
@@ -272,136 +196,6 @@ verify($value)->instanceOf(ClassName::class);
 verify($value)->arrayHasKey($key);
 verify($string)->stringContainsString($substring);
 ```
-
----
-
-## 🗃️ Test Fixtures
-
-### **Available Fixtures**
-
-The project has comprehensive fixtures with realistic Sri Lankan business data:
-
-**Core Fixtures:**
-- **EmployeeFixture** - 4 employees (IT, Finance, Marketing, HR - includes left employee)
-- **CustomerFixture** - 4 customers (active & inactive)
-- **VendorFixture** - 4 vendors (CEB, Dialog, Office Supplies, Property)
-- **ExpenseCategoryFixture** - 5 categories (Utilities, Rent, Office Supplies, Telecom, Salaries)
-- **ExpenseFixture** - 5 expenses (recurring & one-time, LKR & USD)
-- **InvoiceFixture** - 6 invoices (paid, pending, overdue, cancelled)
-- **EmployeeSalaryAdvanceFixture** - 5 salary advances (multiple employees & months)
-
-### **Fixture Keys Reference**
-
-**Employees:**
-- `john_doe` - Software Engineer, IT, active
-- `jane_smith` - Senior Accountant, Finance, active
-- `robert_brown` - Marketing Manager, Marketing, active
-- `sarah_wilson` - HR Manager, left (edge case)
-
-**Customers:**
-- `tech_solutions` - Tech Solutions (Pvt) Ltd
-- `retail_mart` - Retail Mart Lanka
-- `global_exports` - Global Exports Ltd
-- `inactive_corp` - Inactive (edge case)
-
-**Vendors:**
-- `office_supplies_co` - Office Supplies Co.
-- `electricity_board` - Ceylon Electricity Board
-- `telecom_provider` - Dialog Axiata PLC
-- `rent_landlord` - ABC Properties
-
-**Expenses:**
-- `electricity_jan` - Recurring utility (LKR)
-- `rent_jan` - Recurring rent (LKR)
-- `office_supplies_oct` - One-time (LKR)
-- `telecom_nov` - Recurring telecom (LKR)
-- `foreign_expense` - Software license (USD)
-
-**Salary Advances:**
-- `john_jan_advance` - John's January advance
-- `john_feb_advance` - John's February advance
-- `jane_march_advance` - Jane's March advance
-- `robert_nov_advance` - Robert's November advance
-- `john_nov_advance` - John's November advance
-
-### **Using Fixtures in Tests**
-
-**Basic Usage:**
-```php
-public function _fixtures()
-{
-    return [
-        'employees' => ['class' => EmployeeFixture::class],
-        'advances' => ['class' => EmployeeSalaryAdvanceFixture::class],
-    ];
-}
-
-public function testExample()
-{
-    // Get single record
-    $employee = $this->tester->grabFixture('employees', 'john_doe');
-    verify($employee->first_name)->equals('John');
-    
-    // Test relationship
-    $advance = $this->tester->grabFixture('advances', 'john_jan_advance');
-    verify($advance->employee)->notNull();
-    verify($advance->employee->first_name)->equals('John');
-}
-```
-
-**Multiple Fixtures with Dependencies:**
-```php
-public function _fixtures()
-{
-    return [
-        'categories' => ['class' => ExpenseCategoryFixture::class],
-        'vendors' => ['class' => VendorFixture::class],
-        'expenses' => ['class' => ExpenseFixture::class], // Depends on above
-    ];
-}
-
-public function testExpenseRelationships()
-{
-    $expense = $this->tester->grabFixture('expenses', 'electricity_jan');
-    
-    verify($expense->expenseCategory)->instanceOf(ExpenseCategory::class);
-    verify($expense->expenseCategory->name)->equals('Utilities');
-    verify($expense->vendor->name)->equals('Ceylon Electricity Board');
-}
-```
-
-**Testing Business Logic with Fixtures:**
-```php
-public function testMonthlyTotal()
-{
-    $employee = $this->tester->grabFixture('employees', 'john_doe');
-    
-    // john_doe has 50k in January from fixtures
-    $total = EmployeeSalaryAdvance::getMonthlyTotal($employee->id, 2025, 1);
-    verify($total)->equals(50000.00);
-}
-```
-
-### **Fixture Best Practices**
-
-✅ **DO:**
-- Use fixtures for all database tests
-- Create fixtures for new models immediately
-- Use realistic Sri Lankan data
-- Include edge cases (inactive, cancelled, foreign currency)
-- Use meaningful keys (`john_doe`, not `user1`)
-- Define dependencies in correct order
-- Test relationships using fixture data
-
-❌ **DON'T:**
-- Manually create test data in `_before()`
-- Manually delete test data in `_after()`
-- Specify `id` in fixture data (let database auto-generate)
-- Use generic names (`test_user`, `record1`)
-- Modify fixture data directly in tests
-- Create data without fixtures for database tests
-
-**For complete guide, see:** `tests/FIXTURES.md`
 
 ---
 

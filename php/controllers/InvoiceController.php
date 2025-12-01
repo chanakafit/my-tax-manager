@@ -338,7 +338,7 @@ class InvoiceController extends BaseController
                     'notes' => $emailForm->additionalNotes,
                     'publicUrl' => $publicUrl
                 ])
-                    ->setFrom([Params::get('senderEmail') => Params::get('senderName')])
+                    ->setFrom([\app\helpers\ConfigHelper::getSenderEmail() => \app\helpers\ConfigHelper::getSenderName()])
                     ->setSubject($emailForm->subject)
                     ->attachContent($pdfContent, [
                         'fileName' => "Invoice_{$model->invoice_number}.pdf",

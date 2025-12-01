@@ -3,6 +3,7 @@
 use app\helpers\Params;
 use yii\helpers\Html;
 use yii\helpers\Url;
+use app\helpers\ConfigHelper;
 
 /* @var $this yii\web\View */
 /* @var $model app\models\Invoice */
@@ -12,6 +13,7 @@ $this->title = 'Invoice #' . $model->invoice_number;
 ?>
 
 <div class="invoice-view">
+    <?php $banking = ConfigHelper::getBankingDetails(); ?>
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1><?= Html::encode($this->title) ?></h1>
         <div>
@@ -55,6 +57,12 @@ $this->title = 'Invoice #' . $model->invoice_number;
                     <h5 class="card-title">Bill To</h5>
                     <div>
                         <strong><?= Html::encode($model->customer->company_name) ?></strong><br>
+                        <?php if (!empty($model->customer->registry_code)): ?>
+                            <div><strong>Registry code:</strong> <?= Html::encode($model->customer->registry_code) ?></div>
+                        <?php endif; ?>
+                        <?php if (!empty($model->customer->tax_number)): ?>
+                            <div><strong>Vat number:</strong> <?= Html::encode($model->customer->tax_number) ?></div>
+                        <?php endif; ?>
                         <?= nl2br(Html::encode($model->customer->address)) ?><br>
                         <?= Html::encode($model->customer->city) ?>
                         <?= $model->customer->state ? ', ' . Html::encode($model->customer->state) : '' ?>
@@ -126,19 +134,19 @@ $this->title = 'Invoice #' . $model->invoice_number;
                     <table class="table table-borderless">
                         <tr>
                             <td><strong>Bank Name:</strong></td>
-                            <td><?= Html::encode(Params::get('bankingDetailsBankName')) ?></td>
+                            <td><?= Html::encode($banking['bankName']) ?></td>
                         </tr>
                         <tr>
                             <td><strong>Branch Name:</strong></td>
-                            <td><?= Html::encode(Params::get('bankingDetailsBranchName')) ?></td>
+                            <td><?= Html::encode($banking['branchName']) ?></td>
                         </tr>
                         <tr>
                             <td><strong>Account Name:</strong></td>
-                            <td><?= Html::encode(Params::get('bankingDetailsAccountName')) ?></td>
+                            <td><?= Html::encode($banking['accountName']) ?></td>
                         </tr>
                         <tr>
                             <td><strong>Account Number:</strong></td>
-                            <td><?= Html::encode(Params::get('bankingDetailsAccountNumber')) ?></td>
+                            <td><?= Html::encode($banking['accountNumber']) ?></td>
                         </tr>
                     </table>
                 </div>
@@ -146,24 +154,24 @@ $this->title = 'Invoice #' . $model->invoice_number;
                     <table class="table table-borderless">
                         <tr>
                             <td><strong>SWIFT Code:</strong></td>
-                            <td><?= Html::encode(Params::get('bankingDetailsSwiftCode')) ?></td>
+                            <td><?= Html::encode($banking['swiftCode']) ?></td>
                         </tr>
                         <tr>
                             <td><strong>Bank Code:</strong></td>
-                            <td><?= Html::encode(Params::get('bankingDetailsBankCode')) ?></td>
+                            <td><?= Html::encode($banking['bankCode']) ?></td>
                         </tr>
                         <tr>
                             <td><strong>Branch Code:</strong></td>
-                            <td><?= Html::encode(Params::get('bankingDetailsBranchCode')) ?></td>
+                            <td><?= Html::encode($banking['branchCode']) ?></td>
                         </tr>
                     </table>
                 </div>
             </div>
             
-            <?php if (Params::get('bankingDetailsBankAddress')): ?>
+            <?php if (!empty($banking['bankAddress'])): ?>
                 <div class="mt-2">
                     <strong>Bank Address:</strong><br>
-                    <?= Html::encode(Params::get('bankingDetailsBankAddress')) ?>
+                    <?= Html::encode($banking['bankAddress']) ?>
                 </div>
             <?php endif; ?>
         </div>

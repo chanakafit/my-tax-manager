@@ -32,6 +32,7 @@ use app\widgets\BActiveForm as ActiveForm;
         </div>
     </div>
 
+    <?= $form->field($model, 'registry_code')->textInput(['maxlength' => true]) ?>
     <?= $form->field($model, 'tax_number')->textInput(['maxlength' => true]) ?>
     <?= $form->field($model, 'notes')->textarea(['rows' => 4]) ?>
     <?= $form->field($model, 'status')->dropDownList($model::getStatusList()) ?>
