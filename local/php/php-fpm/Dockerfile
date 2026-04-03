@@ -41,6 +41,7 @@ RUN apk add --no-cache dcron
 
 # Copy crontab file to the container
 COPY ./php/crontab /etc/crontabs/root
+COPY ./local/php/php-fpm/php-fpm.conf /usr/local/etc/php-fpm.d/zzz-custom.conf
 
 HEALTHCHECK CMD ["php-fpm", "-t"]
 
