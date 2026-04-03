@@ -32,18 +32,13 @@ services:
       - ./logs/php/php.log:/var/log/fpm-php.www.log
     networks:
       - mb_network
+    env_file: .env.prod
     environment:
       - YII_DEBUG=false
       - APP_ENV=prod
       - DB_HOST=mariadb
       - DB_PORT=3306
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASSWD=${DB_PASSWD}
       - DB_PREFIX=
-      - MAIL_DSN=${MAIL_DSN}
-      - COOKIE_VALIDATION_KEY=${COOKIE_VALIDATION_KEY}
-      - APP_NAME=${APP_NAME}
 
   mariadb:
     container_name: mb-mariadb
