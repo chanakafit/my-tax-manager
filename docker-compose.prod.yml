@@ -34,6 +34,15 @@ services:
     environment:
       - YII_DEBUG=false
       - APP_ENV=prod
+      - DB_HOST=mariadb
+      - DB_PORT=3306
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWD=${DB_PASSWD}
+      - DB_PREFIX=
+      - MAIL_DSN=${MAIL_DSN}
+      - COOKIE_VALIDATION_KEY=${COOKIE_VALIDATION_KEY}
+      - APP_NAME=${APP_NAME}
 
   mariadb:
     container_name: mb-mariadb
@@ -43,7 +52,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_PASSWORD: ${DB_PASSWD}
     ports:
       - "127.0.0.1:3307:3306"
     volumes:
