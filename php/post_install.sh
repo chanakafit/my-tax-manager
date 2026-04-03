@@ -40,6 +40,11 @@ else
 fi
 
 echo ""
+echo "Fixing directory permissions..."
+mkdir -p web/assets runtime/logs runtime/cache runtime/mpdf
+chown -R www-data:www-data web/assets runtime
+
+echo ""
 echo "Running database migrations..."
 php yii migrate/up --interactive=0 || echo "⚠ Migrations failed - run 'php yii migrate/mark <version>' if DB was imported from dump"
 
