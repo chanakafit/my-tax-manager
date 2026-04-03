@@ -41,7 +41,7 @@ fi
 
 echo ""
 echo "Running database migrations..."
-php yii migrate/up --interactive=0
+php yii migrate/up --interactive=0 || echo "⚠ Migrations failed - run 'php yii migrate/mark <version>' if DB was imported from dump"
 
 echo ""
 echo "========================================"
