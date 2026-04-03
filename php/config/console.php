@@ -2,7 +2,9 @@
 
 $params = require __DIR__ . '/params.php';
 $db = require __DIR__ . '/db.php';
-$mailLocal = require __DIR__ . '/mail-local.php';
+$mailDsn = file_exists(__DIR__ . '/mail-local.php')
+    ? (require __DIR__ . '/mail-local.php')['smtp']['dsn']
+    : (getenv('MAIL_DSN') ?: 'null://null');
 
 $config = [
     'id' => 'basic-console',
@@ -31,7 +33,7 @@ $config = [
             'class' => \yii\symfonymailer\Mailer::class,
             'viewPath' => '@app/mail',
             'transport' => [
-                'dsn' => $mailLocal['smtp']['dsn'],
+                'dsn' => $mailDsn,
             ],
             'enableMailerLogging' => true,
         ],
