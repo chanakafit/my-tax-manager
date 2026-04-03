@@ -6,6 +6,13 @@ echo "========================================"
 echo "Starting Post-Install Script"
 echo "========================================"
 
+# Set composer flags based on environment
+if [ "${APP_ENV}" = "prod" ]; then
+    COMPOSER_FLAGS="--no-dev --optimize-autoloader --no-interaction --prefer-dist"
+else
+    COMPOSER_FLAGS="--optimize-autoloader --no-interaction --prefer-dist"
+fi
+
 # Check if vendor directory exists and has content (autoload.php is the key file)
 if [ -d "vendor" ] && [ -f "vendor/autoload.php" ]; then
     echo "✓ Vendor directory already exists with dependencies"
@@ -13,7 +20,7 @@ if [ -d "vendor" ] && [ -f "vendor/autoload.php" ]; then
     # Check if composer.lock is newer than vendor, indicating updates are needed
     if [ -f "composer.lock" ] && [ "composer.lock" -nt "vendor/autoload.php" ]; then
         echo "composer.lock is newer than vendor, updating dependencies..."
-        composer install --optimize-autoloader --no-interaction --prefer-dist
+        composer install $COMPOSER_FLAGS
         if [ $? -eq 0 ]; then
             echo "✓ Composer update completed successfully"
         else
@@ -23,7 +30,7 @@ if [ -d "vendor" ] && [ -f "vendor/autoload.php" ]; then
     fi
 else
     echo "Running composer install..."
-    composer install --optimize-autoloader --no-interaction --prefer-dist
+    composer install $COMPOSER_FLAGS
     if [ $? -eq 0 ]; then
         echo "✓ Composer install completed successfully"
     else
