@@ -63,11 +63,11 @@ services:
     restart: always
     depends_on:
       - mariadb
+    env_file: .env.prod
     environment:
       PMA_HOST: mariadb
       PMA_PORT: 3306
       PMA_USER: root
-      PMA_PASSWORD: ${DB_ROOT_PASSWORD}
     ports:
       - "127.0.0.1:8080:80"
     networks:
