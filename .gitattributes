@@ -1,0 +1,19 @@
+# Normalize all text files to LF in the repository.
+# Prevents accidental repo-wide CRLF conversions when editing on Windows/WSL.
+* text=auto eol=lf
+
+# Scripts must be LF regardless of platform (they run in Linux containers / on the VPS).
+*.sh    text eol=lf
+yii     text eol=lf
+
+# Windows-only helpers stay CRLF.
+*.bat   text eol=crlf
+
+# Binary assets — never touch.
+*.xlsx  binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.pdf   binary
