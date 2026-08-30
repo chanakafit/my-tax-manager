@@ -1,0 +1,105 @@
+# Local development stack for My Tax Manager.
+#
+# Fully isolated from any other Docker stack on this machine:
+#   project name : fin-local          (not "mb")
+#   containers   : finlocal-*
+#   network      : finlocal
+#   db volume    : finlocal_db
+#   host ports   : 127.0.0.1 only, all overridable via .env.local
+#                    8090  -> app     (http://fin.local:8090)
+#                    8091  -> phpMyAdmin
+#                    3307  -> MariaDB
+#
+# Usage:  ./local/dev.sh up      (or: docker compose -f docker-compose.local.yml --env-file .env.local up -d)
+name: fin-local
+
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: finlocal-nginx
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${HTTP_PORT:-8090}:80"
+    volumes:
+      - ./php/:/var/www/html/
+      - finlocal_assets:/var/www/html/web/assets
+      # mount the whole dir, not the single file — single-file bind mounts
+      # break on edit under Docker Desktop + WSL
+      - ./local/nginx/:/etc/nginx/conf.d/:ro
+      - ./logs/nginx:/var/log/nginx/
+    depends_on:
+      - php
+    networks:
+      - finlocal
+
+  php:
+    build:
+      context: .
+      dockerfile: local/php/php-fpm/Dockerfile
+    image: finlocal-php
+    container_name: finlocal-php
+    restart: unless-stopped
+    env_file: .env.local
+    environment:
+      - APP_ENV=dev
+    volumes:
+      - ./php/:/var/www/html/
+      # These dirs live on Docker-managed volumes: the repo is on a Windows
+      # drive (/mnt/d) where chmod() is refused, which breaks Yii's asset
+      # publishing and runtime cache. Code stays bind-mounted for hot reload.
+      - finlocal_assets:/var/www/html/web/assets
+      - finlocal_runtime:/var/www/html/runtime
+      - ./logs/php/php.log:/var/log/fpm-php.www.log
+    depends_on:
+      - mariadb
+      - redis
+    networks:
+      - finlocal
+
+  mariadb:
+    image: mariadb:10.2
+    container_name: finlocal-mariadb
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-mybs}
+    ports:
+      - "127.0.0.1:${DB_PORT:-3307}:3306"
+    volumes:
+      - finlocal_db:/var/lib/mysql
+    networks:
+      - finlocal
+
+  redis:
+    image: redis:7-alpine
+    container_name: finlocal-redis
+    restart: unless-stopped
+    networks:
+      - finlocal
+
+  phpmyadmin:
+    image: phpmyadmin:5
+    container_name: finlocal-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mariadb
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 256M
+    ports:
+      - "127.0.0.1:${PMA_PORT:-8091}:80"
+    depends_on:
+      - mariadb
+    networks:
+      - finlocal
+
+networks:
+  finlocal:
+    name: finlocal
+
+volumes:
+  finlocal_db:
+    name: finlocal_db
+  finlocal_assets:
+    name: finlocal_assets
+  finlocal_runtime:
+    name: finlocal_runtime

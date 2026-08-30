@@ -8,7 +8,13 @@ logs
 
 .env
 .env.prod
+.env.local
 /php/.env
+
+# database dumps (may contain real financial data)
+*.sql
+*.sql.gz
+/db-dumps/
 /php/web/uploads/
 
 /php/vendor/
