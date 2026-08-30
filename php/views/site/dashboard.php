@@ -5,6 +5,7 @@ use app\models\FinancialTransaction;
 use app\widgets\ExpenseHealthCheckWidget;
 use app\widgets\PaysheetHealthCheckWidget;
 use yii\helpers\Html;
+use yii\helpers\Url;
 use kartik\grid\GridView;
 use miloschuman\highcharts\Highcharts;
 use yii\data\ActiveDataProvider;
@@ -17,6 +18,9 @@ use yii\data\ActiveDataProvider;
 /** @var $taxYearString string */
 /** @var $taxYearStart \DateTime */
 /** @var $taxYearEnd \DateTime */
+/** @var $taxYear int */
+/** @var $currentTaxYear int */
+/** @var $availableYears int[] */
 
 $this->title = "Financial Dashboard - Tax Year {$taxYearString}";
 $this->params['breadcrumbs'][] = $this->title;
@@ -25,17 +29,33 @@ $this->params['breadcrumbs'][] = $this->title;
 <div class="site-dashboard">
     <div class="row mb-4">
         <div class="col-md-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <h2><?= Html::encode($this->title) ?></h2>
-                <div class="tax-year-info text-muted">
-                    <?= Yii::$app->formatter->asDate($taxYearStart, 'medium') ?> -
-                    <?= Yii::$app->formatter->asDate($taxYearEnd, 'medium') ?>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h2 class="mb-0">Financial Dashboard</h2>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <label for="dashboard-year" class="text-muted mb-0">Tax year</label>
+                    <select id="dashboard-year" class="form-select form-select-sm" style="width:auto"
+                            onchange="window.location='<?= Url::to(['site/dashboard']) ?>?year=' + this.value">
+                        <?php foreach ($availableYears as $y): ?>
+                            <option value="<?= $y ?>"<?= $y === $taxYear ? ' selected' : '' ?>><?= $y ?>/<?= $y + 1 ?><?= $y === $currentTaxYear ? ' (current)' : '' ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <span class="tax-year-info text-muted">
+                        <?= Yii::$app->formatter->asDate($taxYearStart, 'medium') ?> &ndash;
+                        <?= Yii::$app->formatter->asDate($taxYearEnd, 'medium') ?>
+                    </span>
                 </div>
             </div>
+            <?php if ($taxYear !== $currentTaxYear): ?>
+                <div class="alert alert-info py-2 px-3 mt-2 mb-0 d-inline-flex align-items-center gap-2">
+                    <i class="fas fa-history"></i>
+                    Viewing a past tax year (<?= Html::encode($taxYearString) ?>).
+                    <?= Html::a('Back to current year', ['site/dashboard'], ['class' => 'alert-link']) ?>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 
-    <?php if (ConfigHelper::get('attendanceWidgetEnabled') == true): ?>
+    <?php if ($taxYear === $currentTaxYear && ConfigHelper::get('attendanceWidgetEnabled') == true): ?>
         <!-- Attendance widget -->
         <div class="row mb-4">
             <div class="col-md-12">
@@ -44,19 +64,21 @@ $this->params['breadcrumbs'][] = $this->title;
         </div>
     <?php endif; ?>
 
-    <!-- Expense Health Check Widget -->
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <?= ExpenseHealthCheckWidget::widget(['showDetails' => true, 'limit' => 5]) ?>
+    <?php if ($taxYear === $currentTaxYear): ?>
+        <!-- Expense Health Check Widget -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <?= ExpenseHealthCheckWidget::widget(['showDetails' => true, 'limit' => 5]) ?>
+            </div>
         </div>
-    </div>
 
-    <!-- Paysheet Health Check Widget -->
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <?= PaysheetHealthCheckWidget::widget(['showDetails' => true, 'limit' => 5]) ?>
+        <!-- Paysheet Health Check Widget -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <?= PaysheetHealthCheckWidget::widget(['showDetails' => true, 'limit' => 5]) ?>
+            </div>
         </div>
-    </div>
+    <?php endif; ?>
 
     <!-- Cumulative Balance -->
     <div class="row mb-4">

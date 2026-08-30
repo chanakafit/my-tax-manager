@@ -76,15 +76,40 @@ class SiteController extends BaseController
     /**
      * Financial dashboard
      */
-    public function actionDashboard()
+    public function actionDashboard($year = null)
     {
-        // Get current tax year
-        $currentDate = new \DateTime();
-        $currentMonth = (int)$currentDate->format('n');
-        $currentYear = (int)$currentDate->format('Y');
+        // Sri Lankan tax year runs April 1 - March 31. Jan-Mar belongs to the
+        // previous calendar year's tax year.
+        $now = new \DateTime();
+        $currentTaxYear = (int)$now->format('n') >= 4
+            ? (int)$now->format('Y')
+            : (int)$now->format('Y') - 1;
 
-        // If we're in January-March, we're in the previous year's tax year
-        $taxYear = $currentMonth >= 4 ? $currentYear : $currentYear - 1;
+        // Selectable tax years: from the earliest financial activity up to the
+        // current tax year, most recent first.
+        try {
+            $earliestDate = (new \yii\db\Query())
+                ->from(FinancialTransaction::tableName())
+                ->min('transaction_date');
+        } catch (\Exception $e) {
+            $earliestDate = null;
+        }
+        if ($earliestDate) {
+            $d = new \DateTime($earliestDate);
+            $earliestTaxYear = (int)$d->format('n') >= 4
+                ? (int)$d->format('Y')
+                : (int)$d->format('Y') - 1;
+        } else {
+            $earliestTaxYear = $currentTaxYear;
+        }
+        $availableYears = range($currentTaxYear, min($earliestTaxYear, $currentTaxYear));
+
+        // Selected tax year from ?year=, falling back to the current one.
+        $taxYear = (int)$year ?: $currentTaxYear;
+        if (!in_array($taxYear, $availableYears, true)) {
+            $taxYear = $currentTaxYear;
+        }
+
         $taxYearStart = new \DateTime("$taxYear-04-01");
         $taxYearEnd = (clone $taxYearStart)->modify('+1 year')->modify('-1 day'); // March 31st next year
 
@@ -252,6 +277,8 @@ class SiteController extends BaseController
             'taxYearString' => $taxYearString,
             'taxYearStart' => $taxYearStart,
             'taxYearEnd' => $taxYearEnd,
+            'currentTaxYear' => $currentTaxYear,
+            'availableYears' => $availableYears,
         ]);
     }
 

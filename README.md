@@ -48,7 +48,7 @@ This project has been **heavily developed using Generative AI technologies**. Wh
 - **Employee Management**: Payroll, attendance tracking (full/half/1.5 day), salary advances with monthly overview
 - **Automation**: Expense health check (detects missing recurring expenses), paysheet health check (auto-generates missing paysheets)
 - **System Configuration**: Database-driven settings with UI management, signature upload, bulk updates
-- **Reporting**: Excel/PDF exports, dashboard widgets, comprehensive financial reports
+- **Reporting**: Excel/PDF exports, dashboard widgets, tax-year switcher on the dashboard, comprehensive financial reports
 
 ---
 
