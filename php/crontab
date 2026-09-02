@@ -1,7 +1,20 @@
-# Crontab for Yii2 application
-# Add your scheduled tasks here
-# Example: Run a console command every day at midnight
-# 0 0 * * * cd /var/www/html && php yii example/command
+# Scheduled tasks for My Tax Manager.
+# Baked into the image at /etc/crontabs/root (see local/php/php-fpm/Dockerfile)
+# and run by dcron inside the php container. crond inherits the container
+# environment (APP_ENV, MYSQL_*), so `php yii` connects the same as the app.
+#
+# Times are the container's local time (UTC unless the image sets TZ).
+# Output goes to php/runtime/logs/cron.log (visible on the host under
+# <project>/php/runtime/logs/).
 
-# Empty crontab - add your scheduled tasks as needed
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
+# --- monthly, on the 1st ---
+# Detect recurring expenses that are missing for the new month
+5 1 1 * *    cd /var/www/html && php yii expense-health-check/generate  >> runtime/logs/cron.log 2>&1
+# Generate any missing monthly paysheets for active employees
+5 2 1 * *    cd /var/www/html && php yii paysheet-health-check/generate >> runtime/logs/cron.log 2>&1
+# Housekeeping: expire stale "ignored" suggestion flags
+30 3 1 * *   cd /var/www/html && php yii expense-health-check/cleanup   >> runtime/logs/cron.log 2>&1
+35 3 1 * *   cd /var/www/html && php yii paysheet-health-check/cleanup  >> runtime/logs/cron.log 2>&1
