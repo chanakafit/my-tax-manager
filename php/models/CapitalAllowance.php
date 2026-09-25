@@ -50,28 +50,18 @@ class CapitalAllowance extends BaseModel
     {
         parent::afterSave($insert, $changedAttributes);
 
-        // Find and update the tax record to include this allowance
-        $taxRecord = TaxRecord::findOne(['tax_code' => $this->tax_code]);
-        if ($taxRecord) {
-            $taxRecord->trigger(TaxRecord::EVENT_AFTER_TAX_PAYMENT); // This will recalculate the tax including allowances
-        }
+        // The allowance is claimed for the whole year of assessment, so the annual
+        // return and all four quarterly instalments have to be recalculated
+        TaxRecord::recalculateForTaxYear($this->tax_year);
 
         return true;
     }
 
-    public function beforeDelete()
+    public function afterDelete()
     {
-        if (!parent::beforeDelete()) {
-            return false;
-        }
+        parent::afterDelete();
 
-        // Find and update the tax record to remove this allowance
-        $taxRecord = TaxRecord::findOne(['tax_code' => $this->tax_code]);
-        if ($taxRecord) {
-            // Trigger recalculation without this allowance
-            $taxRecord->trigger(TaxRecord::EVENT_AFTER_TAX_PAYMENT);
-        }
-
-        return true;
+        // Recalculate the year of assessment without this allowance
+        TaxRecord::recalculateForTaxYear($this->tax_year);
     }
 }

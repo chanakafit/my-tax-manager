@@ -177,6 +177,34 @@ Upload additional supporting documents for tax return submissions (e.g., income 
 ### Capital Assets & Allowances
 Track business and personal capital assets with full manual control over capital allowances. No automatic allowances - you decide when to claim and at what percentage (0.01-100%). Written down value automatically updated after each allowance. Maximum 5 years per asset. Track percentage claimed each year, view historical allowances, and maintain accurate written down values for tax reporting.
 
+Allowances are claimed for a year of assessment and are applied in full to the annual return; each quarterly instalment claims a quarter of the year's allowances.
+
+### Income Tax Computation
+Records are computed per tax code (`YYYYQ`, quarters 1-4 = Apr-Jun ... Jan-Mar, `0` = annual return) from the financial transaction ledger:
+
+```
+profit        = income - expenses - payroll
+taxable       = max(0, profit - capital allowances - personal relief)
+tax           = min(progressive rates, maximum rate x taxable)
+```
+
+For a year of assessment, quarterly instalments use a quarter of the relief, the allowances and each rate band, so the four quarters add up to roughly the annual liability.
+
+Rates and reliefs are configured in `php/config/params.php` under `taxConfigs.<year of assessment>`:
+
+- `yearlyTaxRelief` - personal relief (Rs. 1,800,000 from 2025/2026)
+- `taxRate` - the **maximum** rate (15% for foreign-currency service exports / foreign source income from 1 April 2025, 0% before, when such income was exempt). The database `tax_config.profit_tax_rate` decides which rate applies from which date.
+- `taxBrackets` - the normal progressive bands for individuals (6% / 18% / 24% / 30% / 36% from 2025/2026). Where these produce less tax than the maximum rate, the lower amount is charged.
+
+A year of assessment that is not listed inherits the most recent configured year, so no entry is needed until the IRD changes the rates.
+
+**Console command** - recalculate stored records after a rate, relief or calculation change (records are otherwise recalculated only when an invoice, expense or paysheet changes; records already marked paid are skipped):
+
+```bash
+docker exec mb-php php /var/www/html/yii finance/recalculate        # all years
+docker exec mb-php php /var/www/html/yii finance/recalculate 2025   # 2025/2026 only
+```
+
 ---
 
 ## 🛠 Technology Stack

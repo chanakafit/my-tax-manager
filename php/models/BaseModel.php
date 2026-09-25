@@ -18,7 +18,12 @@ class BaseModel extends ActiveRecord
     {
         return [
             TimestampBehavior::class,
-            BlameableBehavior::class
+            [
+                'class' => BlameableBehavior::class,
+                // Console commands (cron, recalculations, seeding) have no identity,
+                // so fall back to the admin user instead of failing on a NOT NULL column
+                'defaultValue' => 1,
+            ],
         ];
     }
 }

@@ -197,9 +197,11 @@ class TaxRecord extends BaseModel
         // Calculate profit before capital allowances
         $profit = $totalIncome - $totalExpenses - $totalPayroll;
 
-        // Get capital allowances for this tax period
+        // Capital allowances are claimed for the whole year of assessment (they are
+        // always created against the annual tax code), so a quarterly instalment
+        // takes a quarter of the year's allowances
         $capitalAllowances = CapitalAllowance::find()
-            ->where(['tax_code' => $this->tax_code])
+            ->where(['tax_year' => (string)$year])
             ->all();
 
         $totalCapitalAllowances = 0;
@@ -207,22 +209,23 @@ class TaxRecord extends BaseModel
             $totalCapitalAllowances += $allowance->allowance_amount;
         }
 
-        // Calculate taxable profit after capital allowances and relief
-        $yearlyRelief = Params::get('taxConfigs.' . $year . '.yearlyTaxRelief') ?? 0;
-        if ($quarter === '0') { // Final tax
-            $relief = $yearlyRelief;
-        } else {
-            $relief = $yearlyRelief / 4; // Quarterly relief
-        }
+        // Number of periods the yearly figures are spread over: 1 annual, 4 quarterly
+        $periodsPerYear = ($quarter === '0') ? 1 : 4;
+
+        $totalCapitalAllowances = $totalCapitalAllowances / $periodsPerYear;
+
+        // Personal relief for the year of assessment (quarterly instalments claim a quarter)
+        $relief = TaxConfig::getYearlyRelief($year) / $periodsPerYear;
 
         // Deduct capital allowances and relief from profit
         $taxableProfit = max(0, $profit - $totalCapitalAllowances - $relief);
 
-        // Calculate tax at configured rate based on the tax period start date
-        // This ensures 0% tax for periods before April 1, 2025
-        $taxRatePercent = TaxConfig::getTaxRateForPeriod($startDate, $endDate);
-        $taxRate = $taxRatePercent / 100;
-        $taxAmount = $taxableProfit * $taxRate;
+        // Progressive rates for the year of assessment, capped at the maximum rate
+        // configured for the period start date (0% before April 1, 2025)
+        $taxAmount = TaxConfig::calculateIncomeTax($taxableProfit, $startDate, $periodsPerYear);
+
+        // Effective rate as a percentage, for display
+        $taxRate = $taxableProfit > 0 ? round(($taxAmount / $taxableProfit) * 100, 2) : 0;
 
         $this->tax_period_start = $startDate;
         $this->tax_period_end = $endDate;
@@ -373,10 +376,11 @@ class TaxRecord extends BaseModel
             $totalPaidAmount += $payment->amount;
         }
 
-        // Get capital allowances for this year
+        // Get capital allowances for this year (matched on the year of assessment,
+        // the same way calculateTax() does)
         $capitalAllowances = CapitalAllowance::find()
             ->joinWith('capitalAsset')
-            ->where(['tax_code' => $year . '0'])
+            ->where(['{{%capital_allowance}}.[[tax_year]]' => (string)$year])
             ->all();
 
         $totalCapitalAllowances = 0;
@@ -439,30 +443,59 @@ class TaxRecord extends BaseModel
             // Add final annual tax code
             $taxCodesToRecalculate[] = $taxYear . '0';
 
-            // Recalculate all relevant tax records
-            foreach ($taxCodesToRecalculate as $taxCode) {
-                $taxRecord = static::find()
-                    ->where(['tax_code' => $taxCode])
-                    ->one();
-
-                if ($taxRecord) {
-                    // Only recalculate if not paid yet
-                    if ($taxRecord->payment_status !== 'paid') {
-                        if ($taxRecord->calculateTax()) {
-                            Yii::info("Tax recalculated for period {$taxCode} due to data change", __METHOD__);
-                        } else {
-                            Yii::warning("Failed to recalculate tax for period {$taxCode}: " . json_encode($taxRecord->errors), __METHOD__);
-                        }
-                    } else {
-                        Yii::info("Skipped tax recalculation for period {$taxCode} - already paid", __METHOD__);
-                    }
-                } else {
-                    Yii::info("No tax record found for period {$taxCode} - skipping recalculation", __METHOD__);
-                }
-            }
+            static::recalculateTaxCodes($taxCodesToRecalculate);
         } catch (\Exception $e) {
             // Log but don't fail the operation
             Yii::error("Failed to recalculate tax: " . $e->getMessage(), __METHOD__);
+        }
+    }
+
+    /**
+     * Recalculate every record of a year of assessment - the four quarterly
+     * instalments and the annual return. Used for changes that affect the whole
+     * year, such as capital allowances.
+     * @param int|string $taxYear Year of assessment (e.g. 2025 for 2025/2026)
+     */
+    public static function recalculateForTaxYear($taxYear)
+    {
+        try {
+            $taxCodes = [];
+            foreach (['1', '2', '3', '4', '0'] as $quarter) {
+                $taxCodes[] = $taxYear . $quarter;
+            }
+
+            static::recalculateTaxCodes($taxCodes);
+        } catch (\Exception $e) {
+            // Log but don't fail the operation
+            Yii::error("Failed to recalculate tax for year {$taxYear}: " . $e->getMessage(), __METHOD__);
+        }
+    }
+
+    /**
+     * Recalculate the given tax codes, skipping records already paid
+     * @param array $taxCodes
+     */
+    protected static function recalculateTaxCodes(array $taxCodes)
+    {
+        foreach ($taxCodes as $taxCode) {
+            $taxRecord = static::find()
+                ->where(['tax_code' => $taxCode])
+                ->one();
+
+            if ($taxRecord) {
+                // Only recalculate if not paid yet
+                if ($taxRecord->payment_status !== 'paid') {
+                    if ($taxRecord->calculateTax()) {
+                        Yii::info("Tax recalculated for period {$taxCode} due to data change", __METHOD__);
+                    } else {
+                        Yii::warning("Failed to recalculate tax for period {$taxCode}: " . json_encode($taxRecord->errors), __METHOD__);
+                    }
+                } else {
+                    Yii::info("Skipped tax recalculation for period {$taxCode} - already paid", __METHOD__);
+                }
+            } else {
+                Yii::info("No tax record found for period {$taxCode} - skipping recalculation", __METHOD__);
+            }
         }
     }
 }

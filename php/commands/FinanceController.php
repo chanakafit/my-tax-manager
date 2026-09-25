@@ -28,7 +28,54 @@ class FinanceController extends Controller
     public function actionMonthly()
     {
         $this->generatePaysheets();
-        $this->calculateMonthlyTax();
+        $this->calculateQuarterlyTax();
+    }
+
+    /**
+     * Recalculate stored tax records from the ledger. Needed after a change to the
+     * rates, reliefs or the calculation itself - records are otherwise only
+     * recalculated when an invoice, expense or paysheet changes.
+     *
+     * Usage: yii finance/recalculate [taxYear]
+     *
+     * @param int|null $taxYear Year of assessment (2025 = 2025/2026). Omit for all years.
+     */
+    public function actionRecalculate($taxYear = null)
+    {
+        $query = TaxRecord::find()->orderBy(['tax_code' => SORT_ASC]);
+        if ($taxYear !== null) {
+            $query->where(['like', 'tax_code', $taxYear . '%', false]);
+        }
+
+        $records = $query->all();
+        if (empty($records)) {
+            echo "No tax records found.\n";
+            return;
+        }
+
+        foreach ($records as $record) {
+            $code = $record->tax_code;
+
+            if ($record->payment_status === 'paid') {
+                echo "{$code}: skipped (already paid)\n";
+                continue;
+            }
+
+            $oldTax = $record->tax_amount;
+            if (!$record->calculateTax()) {
+                echo "{$code}: FAILED - " . json_encode($record->errors) . "\n";
+                continue;
+            }
+
+            printf(
+                "%s: taxable %s, tax %s -> %s (effective rate %s%%)\n",
+                $code,
+                number_format($record->taxable_amount, 2),
+                number_format($oldTax, 2),
+                number_format($record->tax_amount, 2),
+                $record->tax_rate
+            );
+        }
     }
 
     /**

@@ -83,6 +83,7 @@ There is no linter configured. `.github/copilot-instructions.md` asks for PSR-12
 - `yii expense-health-check/generate|count` — recurring-expense detection (cron: monthly).
 - `yii paysheet-health-check/generate|count` — missing-paysheet generation (cron: monthly).
 - `yii finance/daily`, `yii finance/monthly` — recurring expenses, overdue invoices, payment reminders, paysheet generation.
+- `yii finance/recalculate [taxYear]` — recompute stored `TaxRecord` rows from the ledger (skips records marked paid).
 
 ## Architecture
 
@@ -109,7 +110,9 @@ Runtime, user-editable settings live in the DB (`SystemConfig` table) and are re
 - Sri Lankan fiscal year is **April 1 – March 31**. Jan–Mar dates belong to the *previous* calendar year's tax year.
 - `tax_code` format: `YYYYQ` where `Q` is `1..4` for quarters (Q1 = Apr–Jun ... Q4 = Jan–Mar) and `0` for the annual/final return.
 - `recalculateForDate` finds the affected quarter code + the `YYYY0` annual code and re-runs `TaxRecord::calculateTax()` on each **existing** record, skipping any with `payment_status = 'paid'`.
-- `calculateTax()` aggregates from `FinancialTransaction` rows (by `category` and `transaction_date` range), subtracts `CapitalAllowance` amounts for the `tax_code` and yearly relief (quarterly = yearly/4), applies `TaxConfig::getTaxRateForPeriod()` (0% before 2025-04-01), and stores results plus JSON arrays of contributing `related_invoice_ids` / `related_expense_ids` / `related_paysheet_ids`.
+- `calculateTax()` aggregates from `FinancialTransaction` rows (by `category` and `transaction_date` range), subtracts `CapitalAllowance` amounts for the year of assessment (matched on `tax_year`) and the yearly personal relief, then applies `TaxConfig::calculateIncomeTax()`. Quarterly records divide the relief, the allowances and the rate bands by 4. It stores results plus JSON arrays of contributing `related_invoice_ids` / `related_expense_ids` / `related_paysheet_ids`. `tax_rate` holds the resulting **effective** rate as a percentage.
+- Rates: `params.taxConfigs.<year>.taxBrackets` are the normal progressive individual rates (6/18/24/30/36 from 2025/26) and `taxConfigs.<year>.taxRate` (mirrored by `tax_config.profit_tax_rate`, which decides the date ranges) is a **maximum** rate — 15% for foreign-currency service exports / foreign-source income from 2025-04-01 under First Schedule para 1(6), 0% before (exempt). `TaxConfig::applyRateTable()` charges the lower of the two and is pure/unit-tested. A year of assessment with no `taxConfigs` entry inherits the most recent one.
+- `TaxRecord::recalculateForTaxYear($year)` recalculates all five records of a year (used by `CapitalAllowance`); `yii finance/recalculate [year]` does the same from the CLI after a rate or formula change.
 - Recalc failures are logged (`Yii::error`) and swallowed — they never abort the triggering save/delete.
 
 `FinancialTransaction` is the ledger that ties everything together: income/expense/payroll/tax rows carrying `amount_lkr` and optional `related_*_id` back-references. The dashboard and tax engine both read from it, not from the source models directly.
