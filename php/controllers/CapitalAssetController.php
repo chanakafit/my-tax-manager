@@ -72,15 +72,9 @@ class CapitalAssetController extends BaseController
     {
         $asset = $this->findModel($id);
         $taxYear = Yii::$app->request->post('taxYear');
-        $percentage = Yii::$app->request->post('percentage');
 
         if (!$taxYear) {
             Yii::$app->session->setFlash('error', 'Tax year is required.');
-            return $this->redirect(['view', 'id' => $id]);
-        }
-
-        if (!$percentage || $percentage <= 0 || $percentage > 100) {
-            Yii::$app->session->setFlash('error', 'Valid percentage (1-100) is required.');
             return $this->redirect(['view', 'id' => $id]);
         }
 
@@ -95,7 +89,8 @@ class CapitalAssetController extends BaseController
             return $this->redirect(['view', 'id' => $id]);
         }
 
-        $allowance = $asset->calculateAllowance($taxYear, $percentage);
+        // Fixed at 20% of the original cost per year, 5 years per asset
+        $allowance = $asset->calculateAllowance($taxYear);
         if ($allowance && $allowance->save()) {
             // Update the asset's written down value
             $asset->current_written_down_value = $allowance->written_down_value;

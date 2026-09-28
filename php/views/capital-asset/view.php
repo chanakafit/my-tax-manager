@@ -1,6 +1,7 @@
 <?php
 use yii\helpers\Html;
 use yii\widgets\DetailView;
+use app\models\CapitalAllowance;
 use app\widgets\BGridView as GridView;
 use yii\data\ArrayDataProvider;
 
@@ -80,7 +81,7 @@ $this->params['breadcrumbs'][] = $this->title;
             <div class="card">
                 <div class="card-header">
                     <h4 class="mb-3">Capital Allowances</h4>
-                    <?php if ($model->status === 'active' && count($allowances) < 5): ?>
+                    <?php if ($model->status === 'active' && count($allowances) < CapitalAllowance::MAX_YEARS): ?>
                     <div class="alert alert-info mb-3">
                         <i class="fas fa-info-circle"></i>
                         <strong>Original Asset Value:</strong> <?= Yii::$app->formatter->asCurrency($model->purchase_cost, 'LKR') ?> &nbsp;|&nbsp;
@@ -89,32 +90,25 @@ $this->params['breadcrumbs'][] = $this->title;
                     <div>
                         <?php $nextYear = date('Y'); ?>
                         <?= Html::beginForm(['calculate-allowance', 'id' => $model->id], 'post', ['class' => 'row g-2']); ?>
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <?= Html::dropDownList('taxYear', null,
                                     array_combine(range($nextYear-2, $nextYear+1), range($nextYear-2, $nextYear+1)),
                                     ['class' => 'form-control', 'prompt' => 'Select Tax Year']
                                 ) ?>
+                                <small class="text-muted">
+                                    <?= CapitalAllowance::ANNUAL_PERCENTAGE ?>% of the original asset value
+                                    (<?= Yii::$app->formatter->asCurrency($model->purchase_cost * CapitalAllowance::ANNUAL_PERCENTAGE / 100, 'LKR') ?>)
+                                    per year, over <?= CapitalAllowance::MAX_YEARS ?> years
+                                </small>
                             </div>
-                            <div class="col-md-4">
-                                <?= Html::textInput('percentage', '20', [
-                                    'class' => 'form-control',
-                                    'placeholder' => 'Percentage (1-100)',
-                                    'type' => 'number',
-                                    'min' => '0.01',
-                                    'max' => '100',
-                                    'step' => '0.01',
-                                    'required' => true
-                                ]) ?>
-                                <small class="text-muted">% of original asset value (<?= Yii::$app->formatter->asCurrency($model->purchase_cost, 'LKR') ?>)</small>
-                            </div>
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 <?= Html::submitButton('<i class="fas fa-calculator"></i> Add Allowance', ['class' => 'btn btn-primary w-100']) ?>
                             </div>
                         <?= Html::endForm(); ?>
                     </div>
-                    <?php elseif (count($allowances) >= 5): ?>
+                    <?php elseif (count($allowances) >= CapitalAllowance::MAX_YEARS): ?>
                         <div class="alert alert-warning">
-                            <i class="fas fa-exclamation-triangle"></i> Maximum 5 years of capital allowances have been claimed for this asset.
+                            <i class="fas fa-exclamation-triangle"></i> All <?= CapitalAllowance::MAX_YEARS ?> years of capital allowances have been claimed for this asset.
                         </div>
                     <?php endif; ?>
                 </div>
@@ -142,7 +136,7 @@ $this->params['breadcrumbs'][] = $this->title;
                                     'format' => 'raw',
                                     'contentOptions' => ['class' => 'text-center'],
                                     'value' => function($model) {
-                                        $percentage = $model->percentage_claimed ? $model->percentage_claimed : 20.0;
+                                        $percentage = $model->percentage_claimed ? $model->percentage_claimed : CapitalAllowance::ANNUAL_PERCENTAGE;
                                         return number_format($percentage, 2) . '%';
                                     },
                                 ],

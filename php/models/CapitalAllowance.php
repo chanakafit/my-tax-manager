@@ -6,6 +6,13 @@ use Yii;
 
 class CapitalAllowance extends BaseModel
 {
+    /**
+     * Straight-line write-off under the Second Schedule of the Inland Revenue Act:
+     * 20% of the original cost each year, so an asset is fully claimed in 5 years.
+     */
+    const ANNUAL_PERCENTAGE = 20.0;
+    const MAX_YEARS = 5;
+
     public static function tableName()
     {
         return '{{%capital_allowance}}';
@@ -20,8 +27,10 @@ class CapitalAllowance extends BaseModel
             [['tax_year'], 'string', 'max' => 4],
             [['tax_code'], 'string', 'max' => 255],
             [['capital_asset_id'], 'exist', 'skipOnError' => true, 'targetClass' => CapitalAsset::class, 'targetAttribute' => ['capital_asset_id' => 'id']],
-            ['year_number', 'in', 'range' => range(1, 5)],
-            ['percentage_claimed', 'default', 'value' => 20.0],
+            ['year_number', 'in', 'range' => range(1, self::MAX_YEARS)],
+            ['percentage_claimed', 'default', 'value' => self::ANNUAL_PERCENTAGE],
+            ['percentage_claimed', 'in', 'range' => [self::ANNUAL_PERCENTAGE],
+                'message' => 'Capital allowances are claimed at 20% of the original cost per year, over 5 years.'],
             // Prevent duplicate allowances for the same asset and tax year
             [['tax_year'], 'unique', 'targetAttribute' => ['capital_asset_id', 'tax_year'], 'message' => 'A capital allowance for this tax year already exists for this asset.'],
         ];

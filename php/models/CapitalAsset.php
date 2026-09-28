@@ -75,13 +75,15 @@ class CapitalAsset extends BaseModel
     }
 
     /**
-     * Calculate capital allowance for a given tax year with custom percentage
+     * Calculate the capital allowance for a given tax year.
+     *
+     * Straight line at CapitalAllowance::ANNUAL_PERCENTAGE of the original cost,
+     * for at most CapitalAllowance::MAX_YEARS years (20% over 5 years).
      *
      * @param string $taxYear The tax year (e.g., '2024')
-     * @param float $percentage The percentage of original asset value (purchase cost) to claim (1-100)
      * @return CapitalAllowance|null The calculated allowance or null if not eligible
      */
-    public function calculateAllowance($taxYear, $percentage = 20.0)
+    public function calculateAllowance($taxYear)
     {
         // Only business assets are eligible for capital allowance
         if ($this->asset_type !== 'business') {
@@ -100,14 +102,16 @@ class CapitalAsset extends BaseModel
             ->all();
 
         $yearNumber = count($existingAllowances) + 1;
-        if ($yearNumber > 5) {
+        if ($yearNumber > CapitalAllowance::MAX_YEARS) {
             return null; // All allowances used
         }
+
+        $percentage = CapitalAllowance::ANNUAL_PERCENTAGE;
 
         $allowance->year_number = $yearNumber;
         $allowance->percentage_claimed = $percentage;
 
-        // Calculate allowance based on ORIGINAL ASSET VALUE (purchase cost) and custom percentage
+        // Calculate allowance on the ORIGINAL ASSET VALUE (purchase cost)
         $allowance->allowance_amount = $this->purchase_cost * ($percentage / 100);
 
         // Calculate new written down value (previous WDV minus this allowance)

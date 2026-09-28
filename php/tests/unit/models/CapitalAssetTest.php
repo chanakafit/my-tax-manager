@@ -180,6 +180,27 @@ class CapitalAssetTest extends Unit
     }
 
     /**
+     * A business asset is written off at 20% of cost per year - the percentage is
+     * not caller supplied, so a 10 year schedule cannot be entered by mistake
+     */
+    public function testCalculateAllowanceUsesTwentyPercent()
+    {
+        $model = new CapitalAsset();
+        $model->asset_type = 'business';
+        $model->purchase_cost = 873000.40;
+        $model->current_written_down_value = 873000.40;
+
+        $allowance = $model->calculateAllowance('2025');
+
+        verify($allowance)->notNull();
+        verify($allowance->percentage_claimed)->equals(20.0);
+        verify($allowance->year_number)->equals(1);
+        verify($allowance->tax_code)->equals('20250');
+        verify(round($allowance->allowance_amount, 2))->equals(174600.08);
+        verify(round($allowance->written_down_value, 2))->equals(698400.32);
+    }
+
+    /**
      * Test calculateAllowance for personal assets
      */
     public function testCalculateAllowanceForPersonalAssets()
