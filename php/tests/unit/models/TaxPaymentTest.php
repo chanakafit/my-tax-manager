@@ -97,6 +97,88 @@ class TaxPaymentTest extends Unit
     }
 
     /**
+     * A final (whole year) payment needs no quarter, and the quarter rules must
+     * not fire for it - including on the client, which is why the rules carry a
+     * whenClient condition
+     */
+    public function testQuarterRulesOnlyApplyToQuarterlyPayments()
+    {
+        $model = new TaxPayment();
+        $model->detachBehaviors();
+        $model->tax_year = '2025';
+        $model->payment_date = '2026-09-30';
+        $model->amount = 411581.23;
+        $model->payment_type = TaxPayment::TYPE_FINAL;
+
+        // No quarter at all
+        verify($model->validate())->true();
+        verify($model->hasErrors('quarter'))->false();
+
+        // A legacy final payment stored with quarter 0 still validates
+        $model->quarter = 0;
+        verify($model->validate())->true();
+        verify($model->hasErrors('quarter'))->false();
+
+        // Switching to quarterly brings the rules back
+        $model->payment_type = TaxPayment::TYPE_QUARTERLY;
+        $model->quarter = null;
+        $model->validate();
+        verify($model->hasErrors('quarter'))->true();
+    }
+
+    /**
+     * The whenClient condition mirrors isQuarterly() so the browser and the
+     * server agree on when a quarter is needed
+     */
+    public function testQuarterRulesCarryAClientCondition()
+    {
+        $model = new TaxPayment();
+        $conditions = [];
+        foreach ($model->rules() as $rule) {
+            if ((array)$rule[0] === ['quarter'] && isset($rule['when'])) {
+                $conditions[] = $rule['whenClient'] ?? null;
+            }
+        }
+
+        verify(count($conditions))->equals(2);
+        foreach ($conditions as $whenClient) {
+            verify($whenClient)->notNull();
+            verify(strpos($whenClient, 'quarterly') !== false)->true();
+        }
+    }
+
+    /**
+     * isQuarterly() reflects the payment type
+     */
+    public function testIsQuarterly()
+    {
+        $model = new TaxPayment();
+
+        $model->payment_type = TaxPayment::TYPE_QUARTERLY;
+        verify($model->isQuarterly())->true();
+
+        $model->payment_type = TaxPayment::TYPE_FINAL;
+        verify($model->isQuarterly())->false();
+    }
+
+    /**
+     * Saving a final payment clears any quarter left over from the form
+     */
+    public function testFinalPaymentClearsQuarterOnSave()
+    {
+        $model = new TaxPayment();
+        $model->detachBehaviors();
+        $model->tax_year = '2025';
+        $model->payment_date = '2026-09-30';
+        $model->amount = 411581.23;
+        $model->payment_type = TaxPayment::TYPE_FINAL;
+        $model->quarter = 3;
+
+        verify($model->beforeSave(true))->true();
+        verify($model->quarter)->null();
+    }
+
+    /**
      * Test quarter required for quarterly payment
      */
     public function testQuarterRequiredForQuarterlyPayment()
@@ -269,7 +351,7 @@ class TaxPaymentTest extends Unit
     /**
      * Test beforeSave sets quarter to 0 for final payment
      */
-    public function testBeforeSaveSetsQuarterToZeroForFinalPayment()
+    public function testBeforeSaveClearsQuarterForFinalPayment()
     {
         $model = new TaxPayment();
         $model->detachBehaviors();
@@ -286,8 +368,8 @@ class TaxPaymentTest extends Unit
 
         verify($model->save(false))->true();
 
-        // Quarter should be set to 0 for final payment
-        verify($model->quarter)->equals(0);
+        // A final payment covers the whole year, so no quarter is stored
+        verify($model->quarter)->null();
     }
 
     /**

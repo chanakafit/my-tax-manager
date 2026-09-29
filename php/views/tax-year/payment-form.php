@@ -9,12 +9,8 @@ $this->title = 'Record Tax Payment';
 $this->params['breadcrumbs'][] = ['label' => 'Tax Years', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 
-// Generate fiscal years list (current year - 2 to current year)
-$fiscalYears = [];
-$currentYear = (int)date('Y');
-for ($year = $currentYear; $year >= $currentYear - 2; $year--) {
-    $fiscalYears[$year] = $year . '/' . ($year + 1);
-}
+/* @var $taxYears array year of assessment => label, from TaxYearController */
+$fiscalYears = $taxYears;
 
 ?>
 <div class="tax-payment-form">
@@ -60,7 +56,6 @@ for ($year = $currentYear; $year >= $currentYear - 2; $year--) {
                                         4 => 'Q4 (Jan-Mar)'
                                     ], [
                                         'prompt' => 'Select Quarter',
-                                        'id' => 'quarter-field',
                                         'class' => 'form-control'
                                     ]) ?>
                                 </div>
@@ -138,13 +133,17 @@ for ($year = $currentYear; $year >= $currentYear - 2; $year--) {
 <?php
 $script = <<<JS
 function toggleQuarter(value) {
-    const quarterField = document.getElementById('quarter-field');
+    const quarterField = document.getElementById('taxpayment-quarter');
+    if (!quarterField) {
+        return;
+    }
     const quarterContainer = quarterField.closest('.form-group');
-    
+
     if (value === 'quarterly') {
         quarterContainer.style.display = 'block';
         quarterField.required = true;
     } else {
+        // Final payment covers the whole year, so no quarter is needed
         quarterContainer.style.display = 'none';
         quarterField.required = false;
         quarterField.value = '';
@@ -154,7 +153,7 @@ function toggleQuarter(value) {
 // Run on page load for initial state
 document.addEventListener('DOMContentLoaded', function() {
     const paymentType = document.querySelector('[name="TaxPayment[payment_type]"]');
-    if (paymentType.value) {
+    if (paymentType) {
         toggleQuarter(paymentType.value);
     }
 });

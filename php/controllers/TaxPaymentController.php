@@ -55,6 +55,7 @@ class TaxPaymentController extends BaseController
 
         return $this->render('update', [
             'model' => $model,
+            'taxYears' => TaxYearController::selectableTaxYears(),
         ]);
     }
 

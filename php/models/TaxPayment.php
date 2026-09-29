@@ -28,6 +28,11 @@ class TaxPayment extends BaseModel
     const TYPE_QUARTERLY = 'quarterly';
     const TYPE_FINAL = 'final';
 
+    /** Client side counterpart of isQuarterly(), for conditional validation */
+    const JS_IS_QUARTERLY = "function (attribute, value) {
+        return jQuery('#taxpayment-payment_type').val() === 'quarterly';
+    }";
+
     public static function tableName()
     {
         return '{{%tax_payment}}';
@@ -41,13 +46,18 @@ class TaxPayment extends BaseModel
             [['amount'], 'number'],
             [['notes'], 'string'],
             [['quarter'], 'integer'],
-            [['quarter'], 'in', 'range' => [1, 2, 3, 4]],
             [['payment_type'], 'in', 'range' => [self::TYPE_QUARTERLY, self::TYPE_FINAL]],
             [['tax_year'], 'string', 'max' => 4],
             [['reference_number', 'receipt_file'], 'string', 'max' => 255],
+            // A quarter only applies to a quarterly instalment. `when` alone is
+            // server side only, so `whenClient` has to mirror it or the browser
+            // asks for a quarter on a final (whole year) payment.
             [['quarter'], 'required', 'when' => function ($model) {
-                return $model->payment_type === self::TYPE_QUARTERLY;
-            }],
+                return $model->isQuarterly();
+            }, 'whenClient' => self::JS_IS_QUARTERLY],
+            [['quarter'], 'in', 'range' => [1, 2, 3, 4], 'when' => function ($model) {
+                return $model->isQuarterly();
+            }, 'whenClient' => self::JS_IS_QUARTERLY],
             [['quarter'], 'default', 'value' => null],
             [['uploadedFile'], 'file', 'skipOnEmpty' => true, 'extensions' => ['pdf', 'png', 'jpg', 'jpeg'], 'maxSize' => 2 * 1024 * 1024], // 2MB limit
         ];
@@ -67,6 +77,16 @@ class TaxPayment extends BaseModel
             'uploadedFile' => 'Receipt',
             'receipt_file' => 'Receipt File',
         ];
+    }
+
+    /**
+     * Whether this payment is a quarterly instalment rather than the final
+     * (whole year) payment
+     * @return bool
+     */
+    public function isQuarterly()
+    {
+        return $this->payment_type === self::TYPE_QUARTERLY;
     }
 
     public function upload()
@@ -115,8 +135,9 @@ class TaxPayment extends BaseModel
             }
         }
 
-        if ($this->payment_type === self::TYPE_FINAL) {
-            $this->quarter = 0;
+        if (!$this->isQuarterly()) {
+            // Final payment covers the whole year of assessment
+            $this->quarter = null;
         }
 
         return true;

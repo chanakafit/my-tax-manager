@@ -7,6 +7,7 @@ use kartik\file\FileInput;
 
 /* @var $this yii\web\View */
 /* @var $model app\models\TaxPayment */
+/* @var $taxYears array year of assessment => label */
 
 $this->title = 'Update Tax Payment';
 $this->params['breadcrumbs'][] = ['label' => 'Tax Years', 'url' => ['tax-year/index']];
@@ -29,6 +30,12 @@ $this->params['breadcrumbs'][] = 'Update';
 
             <div class="row">
                 <div class="col-md-6">
+                    <?= $form->field($model, 'tax_year')->dropDownList($taxYears, [
+                        'prompt' => 'Select Tax Year'
+                    ]) ?>
+                </div>
+
+                <div class="col-md-6">
                     <?= $form->field($model, 'payment_date')->widget(DatePicker::class, [
                         'pluginOptions' => [
                             'autoclose' => true,
@@ -37,6 +44,9 @@ $this->params['breadcrumbs'][] = 'Update';
                     ]) ?>
                 </div>
 
+            </div>
+
+            <div class="row">
                 <div class="col-md-6">
                     <?= $form->field($model, 'amount')->textInput([
                         'type' => 'number',
