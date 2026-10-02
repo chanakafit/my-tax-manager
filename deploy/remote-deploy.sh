@@ -77,13 +77,22 @@ fi
 { ls -1t "$STATE_DIR"/backups/db-*.sql.gz 2>/dev/null | tail -n +"$((KEEP_BACKUPS + 1))" | xargs -r rm -f; } || true
 
 # --- from here on, failures roll back ---
+# Set just before migrations start: until then nothing has touched the
+# database, so a failure must not restore over live data.
+DB_TOUCHED=0
+
 rollback() {
     set +e
-    warn "deploy failed — rolling back code to ${PREV_SHA:0:12} and restoring database"
+    warn "deploy failed — rolling back code to ${PREV_SHA:0:12}"
     git reset --hard "$PREV_SHA" --quiet
-    gunzip -c "$BACKUP" | $DC exec -T -e MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mariadb mysql -u root "$MYSQL_DATABASE" \
-        && warn "database restored from $BACKUP" \
-        || warn "DB RESTORE FAILED — restore manually: gunzip -c $BACKUP | docker compose -f $COMPOSE_FILE exec -T mariadb mysql -u root -p $MYSQL_DATABASE"
+    if [ "$DB_TOUCHED" = 1 ]; then
+        warn "restoring database (migrations had started)"
+        gunzip -c "$BACKUP" | $DC exec -T -e MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mariadb mysql -u root "$MYSQL_DATABASE" \
+            && warn "database restored from $BACKUP" \
+            || warn "DB RESTORE FAILED — restore manually: gunzip -c $BACKUP | docker compose -f $COMPOSE_FILE exec -T mariadb mysql -u root -p $MYSQL_DATABASE"
+    else
+        warn "database left as it is — no migration had run (backup kept at $BACKUP)"
+    fi
     $DC up -d --force-recreate php nginx >/dev/null 2>&1
     $PHP php yii cache/flush-all >/dev/null 2>&1
     warn "rollback complete — still on ${PREV_SHA:0:12}"
@@ -119,8 +128,29 @@ else
     log "composer.lock unchanged — skipping composer install"
 fi
 
+# --- wait for the database ---
+# Compose recreates mariadb whenever .env.prod changes, so migrations can
+# otherwise race its startup and fail with "[2002] Connection refused".
+db_ready=0
+for _ in $(seq 1 60); do
+    if $DC exec -T -e MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mariadb \
+        mysql -u root -e 'select 1' "$MYSQL_DATABASE" >/dev/null 2>&1; then
+        db_ready=1
+        break
+    fi
+    sleep 2
+done
+if [ "$db_ready" != 1 ]; then
+    # Nothing has been migrated, so revert the code and leave the database alone
+    trap - ERR
+    git reset --hard "$PREV_SHA" --quiet
+    $DC up -d >/dev/null 2>&1 || true
+    die "database not reachable after 120s — code reverted to ${PREV_SHA:0:12}, database untouched"
+fi
+
 # --- migrations ---
 log "running database migrations"
+DB_TOUCHED=1
 $PHP php yii migrate/up --interactive=0
 
 # --- caches + compiled assets ---

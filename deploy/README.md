@@ -38,12 +38,17 @@ This pushes your current `main`, then on the server:
 5. Rebuilds the `php` image **only if** `local/php/**`, `php/crontab`, or
    `docker-compose.prod.yml` changed; otherwise just `docker compose up -d`.
 6. `composer install --no-dev` **only if** `php/composer.json|lock` changed.
-7. `php yii migrate/up`.
-8. `php yii cache/flush-all` and clears `runtime/cache/*` + `web/assets/*`.
-9. Health-checks `https://fin.chanakalk.com/` (expects 200/302).
+7. Waits up to 120s for MariaDB to accept connections — Compose recreates it
+   whenever `.env.prod` changes, and migrations must not race its startup. If
+   it never answers, the code is reverted and the database is left alone.
+8. `php yii migrate/up`.
+9. `php yii cache/flush-all` and clears `runtime/cache/*` + `web/assets/*`.
+10. Health-checks `https://fin.chanakalk.com/` (expects 200/302).
 
-If **any** step 4–9 fails, it automatically rolls the code back to the previous
-commit **and restores the database** from the backup taken in step 3.
+If **any** step 4–10 fails, the code is rolled back to the previous commit. The
+database is restored from the step-3 backup **only if migrations had already
+started** — a failure before that point leaves live data untouched (the backup
+is kept either way).
 
 ### Variations
 
