@@ -105,6 +105,8 @@ mkdir -p "$STATE_DIR"
 echo "$PREV_SHA" > "$STATE_DIR/last-release"
 
 # --- rebuild image only when infra files changed, else just sync containers ---
+php_id_before="$($DC ps -q php 2>/dev/null || true)"
+
 if grep -qE '^(local/php/|php/crontab$|docker-compose\.prod\.yml$)' <<<"$changed_files"; then
     log "infra files changed — rebuilding php image"
     $DC build php
@@ -112,6 +114,15 @@ if grep -qE '^(local/php/|php/crontab$|docker-compose\.prod\.yml$)' <<<"$changed
 else
     log "no infra changes — syncing containers (code is bind-mounted, no restart needed)"
     $DC up -d
+fi
+
+# Compose replaces containers when .env.prod changes, and the new php gets a new
+# IP. nginx resolves `fastcgi_pass php:9000` once at startup, so it keeps talking
+# to the dead address and every request is a 502 until it is restarted.
+php_id_after="$($DC ps -q php 2>/dev/null || true)"
+if [ -n "$php_id_before" ] && [ "$php_id_before" != "$php_id_after" ]; then
+    log "php container was replaced — restarting nginx to re-resolve the upstream"
+    $DC restart nginx >/dev/null
 fi
 
 # wait for php service to report running
@@ -149,8 +160,16 @@ if [ "$db_ready" != 1 ]; then
 fi
 
 # --- migrations ---
+# Only arm the database restore when there is something to apply: a later
+# failure (a health check, say) must not roll back data that no migration
+# ever touched.
+if $PHP php yii migrate/new --interactive=0 2>&1 | grep -q 'No new migrations found'; then
+    log "no pending migrations"
+else
+    DB_TOUCHED=1
+fi
+
 log "running database migrations"
-DB_TOUCHED=1
 $PHP php yii migrate/up --interactive=0
 
 # --- caches + compiled assets ---
