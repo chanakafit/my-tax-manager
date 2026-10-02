@@ -1,11 +1,9 @@
 <?php
 
 return [
-    // Mailjet Configuration (kept in params.php for security)
-    'mailjet' => [
-        'apiKey' => '4acb3a75131a9848eae60784b3e68f72', // Replace with your Mailjet API key
-        'secretKey' => '374844a3bf2db6d23e73b6235cab9b1d', // Replace with your Mailjet Secret key
-    ],
+    // Mail is configured with the MAIL_DSN environment variable (.env.prod /
+    // .env.local), read in config/web.php and config/console.php. Never keep
+    // provider credentials in this file - it is committed.
 
     // Tax Configuration (kept in params.php for complex nested structure)
     // Keyed by Sri Lankan year of assessment (2025 = 2025/2026, 1 Apr 2025 - 31 Mar 2026).
