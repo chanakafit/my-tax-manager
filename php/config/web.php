@@ -42,7 +42,7 @@ $config = [
             'errorAction' => 'site/error',
         ],
         'mailer' => [
-            'class' => \yii\symfonymailer\Mailer::class,
+            'class' => \app\components\Mailer::class,
             'viewPath' => '@app/mail',
             'transport' => [
                 'dsn' => $mailDsn,
@@ -54,6 +54,9 @@ $config = [
                 [
                     'class' => 'yii\log\FileTarget',
                     'levels' => ['error', 'warning'],
+                    // $_SERVER carries every container env var (DB and SMTP
+                    // credentials), so it must never be written to the log
+                    'logVars' => [],
                 ],
                 [
                     'class' => 'yii\log\FileTarget',

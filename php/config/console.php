@@ -25,12 +25,14 @@ $config = [
                 [
                     'class' => 'yii\log\FileTarget',
                     'levels' => ['error', 'warning'],
+                    // Keep credentials from the container environment out of the log
+                    'logVars' => [],
                 ],
             ],
         ],
         'db' => $db,
         'mailer' => [
-            'class' => \yii\symfonymailer\Mailer::class,
+            'class' => \app\components\Mailer::class,
             'viewPath' => '@app/mail',
             'transport' => [
                 'dsn' => $mailDsn,

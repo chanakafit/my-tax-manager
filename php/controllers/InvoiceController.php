@@ -362,12 +362,18 @@ class InvoiceController extends BaseController
                     return $this->redirect(['view', 'id' => $model->id]);
                 }
 
+                // The mailer logs the transport error and returns false, so show
+                // the reason (rejected recipient, bad login, provider quota) to
+                // whoever pressed Send instead of a bare failure
                 $transaction->rollBack();
-                Yii::$app->session->setFlash('error', 'Failed to send the invoice.');
+                $reason = ($mailer instanceof \app\components\Mailer) ? $mailer->lastError : null;
+                Yii::error("Failed to send invoice {$model->invoice_number}: " . ($reason ?: 'unknown mail transport error'), __METHOD__);
+                Yii::$app->session->setFlash('error', 'Failed to send the invoice. The mail server said: '
+                    . ($reason ?: 'no reason given - see runtime/logs/app.log') . ' Nothing was saved, so you can try again.');
             } catch (\Exception $e) {
                 $transaction->rollBack();
+                Yii::error("Error sending invoice {$model->invoice_number}: " . $e->getMessage(), __METHOD__);
                 Yii::$app->session->setFlash('error', 'An error occurred: ' . $e->getMessage());
-                throw $e;
             }
         }
 
