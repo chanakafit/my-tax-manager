@@ -9,6 +9,7 @@ use app\models\Invoice;
 use app\models\Expense;
 use app\models\Employee;
 use app\models\TaxRecord;
+use app\models\CapitalAsset;
 
 class FinanceController extends Controller
 {
@@ -76,6 +77,44 @@ class FinanceController extends Controller
                 $record->tax_rate
             );
         }
+    }
+
+    /**
+     * Repair capital assets whose current_written_down_value has drifted away from
+     * the allowances actually claimed against them (purchase cost - sum of allowances).
+     * Read-only for assets already in step; only drifted rows are rewritten.
+     *
+     * Usage: yii finance/resync-asset-wdv
+     */
+    public function actionResyncAssetWdv()
+    {
+        $assets = CapitalAsset::find()->orderBy(['id' => SORT_ASC])->all();
+        if (empty($assets)) {
+            echo "No capital assets found.\n";
+            return;
+        }
+
+        $fixed = 0;
+        foreach ($assets as $asset) {
+            $before = (float) $asset->current_written_down_value;
+            $asset->syncWrittenDownValue();
+            $after = (float) $asset->current_written_down_value;
+
+            if (abs($before - $after) >= 0.005) {
+                $fixed++;
+                printf(
+                    "#%d %s: %s -> %s\n",
+                    $asset->id,
+                    $asset->asset_name,
+                    number_format($before, 2),
+                    number_format($after, 2)
+                );
+            }
+        }
+
+        echo $fixed === 0
+            ? "All capital assets already in step.\n"
+            : "Resynced {$fixed} asset(s).\n";
     }
 
     /**

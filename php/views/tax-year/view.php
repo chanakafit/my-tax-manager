@@ -40,16 +40,20 @@ $this->params['breadcrumbs'][] = $this->title;
                                     <td class="text-end"><?= Yii::$app->formatter->asCurrency($summary['total_income']) ?></td>
                                 </tr>
                                 <tr>
-                                    <th>Total Expenses:</th>
-                                    <td class="text-end"><?= Yii::$app->formatter->asCurrency($summary['total_expenses']) ?></td>
+                                    <th>Operating Expenses:</th>
+                                    <td class="text-end"><?= Yii::$app->formatter->asCurrency($summary['operating_expenses']) ?></td>
                                 </tr>
                                 <tr>
                                     <th>Capital Allowances:</th>
                                     <td class="text-end"><?= Yii::$app->formatter->asCurrency($summary['total_capital_allowances']) ?></td>
                                 </tr>
                                 <tr>
+                                    <th>Personal Relief:</th>
+                                    <td class="text-end"><?= Yii::$app->formatter->asCurrency($summary['personal_relief']) ?></td>
+                                </tr>
+                                <tr>
                                     <th>Taxable Amount:</th>
-                                    <td class="text-end"><?= Yii::$app->formatter->asCurrency($summary['total_income'] - $summary['total_expenses'] - $summary['total_capital_allowances']) ?></td>
+                                    <td class="text-end"><?= Yii::$app->formatter->asCurrency($summary['taxable_amount']) ?></td>
                                 </tr>
                                 <tr>
                                     <th>Total Tax Amount:</th>

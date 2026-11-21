@@ -122,6 +122,40 @@ class CapitalAsset extends BaseModel
         return $allowance;
     }
 
+    /**
+     * Recompute and persist current_written_down_value as the single source of truth:
+     * the original cost less every capital allowance claimed against this asset.
+     *
+     * This is the one place the written-down value is derived, so the asset column can
+     * never drift from the allowance rows (which are what the tax engine actually reads).
+     * Safe to call repeatedly.
+     *
+     * @return bool whether the value was saved
+     */
+    public function syncWrittenDownValue()
+    {
+        if ($this->getIsNewRecord()) {
+            return false;
+        }
+
+        $totalAllowances = (float) CapitalAllowance::find()
+            ->where(['capital_asset_id' => $this->id])
+            ->sum('allowance_amount');
+
+        $this->current_written_down_value = $this->purchase_cost - $totalAllowances;
+
+        $saved = $this->save(false, ['current_written_down_value', 'updated_at', 'updated_by']);
+        if (!$saved) {
+            Yii::error(
+                "Failed to sync written-down value for capital asset {$this->id}: "
+                . json_encode($this->getErrors()),
+                __METHOD__
+            );
+        }
+
+        return $saved;
+    }
+
     public function upload()
     {
         if ($this->uploadedFile instanceof \yii\web\UploadedFile) {

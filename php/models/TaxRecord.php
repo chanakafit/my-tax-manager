@@ -343,6 +343,9 @@ class TaxRecord extends BaseModel
         $totalIncome = 0;
         $totalExpenses = 0;
         $totalTaxAmount = 0;
+        // Taxable base as computed by the engine (profit less allowances and relief),
+        // read straight from the record so the overview never recomputes it
+        $totalTaxableAmount = 0;
 
         $invoiceIds = [];
         $expenseIds = [];
@@ -353,6 +356,7 @@ class TaxRecord extends BaseModel
                 $totalIncome += $taxRecord->total_income;
                 $totalExpenses += $taxRecord->total_expenses;
                 $totalTaxAmount += $taxRecord->tax_amount;
+                $totalTaxableAmount += $taxRecord->taxable_amount;
                 $invoiceIds = array_merge($invoiceIds, Json::decode($taxRecord->related_invoice_ids ?? '[]'));
                 $expenseIds = array_merge($expenseIds, Json::decode($taxRecord->related_expense_ids ?? '[]'));
                 $paysheetIds = array_merge($paysheetIds, Json::decode($taxRecord->related_paysheet_ids ?? '[]'));
@@ -361,6 +365,7 @@ class TaxRecord extends BaseModel
             $totalIncome = $finalTaxRecord->total_income;
             $totalExpenses = $finalTaxRecord->total_expenses;
             $totalTaxAmount = $finalTaxRecord->tax_amount;
+            $totalTaxableAmount = $finalTaxRecord->taxable_amount;
             $invoiceIds = Json::decode($finalTaxRecord->related_invoice_ids ?? '[]');
             $expenseIds = Json::decode($finalTaxRecord->related_expense_ids ?? '[]');
             $paysheetIds = Json::decode($finalTaxRecord->related_paysheet_ids ?? '[]');
@@ -388,9 +393,17 @@ class TaxRecord extends BaseModel
             $totalCapitalAllowances += $allowance->allowance_amount;
         }
 
+        // total_expenses already bundles capital allowances (see calculateTax), so the
+        // operating (trading) expenses are what is left once the allowances are removed.
+        // This keeps the overview's expense and allowance lines non-overlapping.
+        $operatingExpenses = $totalExpenses - $totalCapitalAllowances;
+
         return [
             'total_income' => $totalIncome,
             'total_expenses' => $totalExpenses,
+            'operating_expenses' => $operatingExpenses,
+            'personal_relief' => TaxConfig::getYearlyRelief($year),
+            'taxable_amount' => $totalTaxableAmount,
             'total_tax_amount' => $totalTaxAmount,
             'total_paid_amount' => $totalPaidAmount,
             'balance_due' => $totalTaxAmount - $totalPaidAmount,

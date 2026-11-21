@@ -59,6 +59,11 @@ class CapitalAllowance extends BaseModel
     {
         parent::afterSave($insert, $changedAttributes);
 
+        // Keep the asset's written-down value in step with its allowances
+        if ($this->capitalAsset) {
+            $this->capitalAsset->syncWrittenDownValue();
+        }
+
         // The allowance is claimed for the whole year of assessment, so the annual
         // return and all four quarterly instalments have to be recalculated
         TaxRecord::recalculateForTaxYear($this->tax_year);
@@ -69,6 +74,11 @@ class CapitalAllowance extends BaseModel
     public function afterDelete()
     {
         parent::afterDelete();
+
+        // Restore the asset's written-down value now this allowance is gone
+        if ($this->capitalAsset) {
+            $this->capitalAsset->syncWrittenDownValue();
+        }
 
         // Recalculate the year of assessment without this allowance
         TaxRecord::recalculateForTaxYear($this->tax_year);

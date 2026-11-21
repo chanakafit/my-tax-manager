@@ -92,14 +92,11 @@ class CapitalAssetController extends BaseController
         // Fixed at 20% of the original cost per year, 5 years per asset
         $allowance = $asset->calculateAllowance($taxYear);
         if ($allowance && $allowance->save()) {
-            // Update the asset's written down value
-            $asset->current_written_down_value = $allowance->written_down_value;
-            if ($asset->save(false)) {
-                Yii::$app->session->setFlash('success', 'Capital allowance added successfully. Written down value updated to ' .
-                    Yii::$app->formatter->asCurrency($allowance->written_down_value, 'LKR'));
-            } else {
-                Yii::$app->session->setFlash('warning', 'Capital allowance saved but failed to update written down value.');
-            }
+            // CapitalAllowance::afterSave() has already resynced the asset's
+            // written-down value, so just read it back for the message.
+            $asset->refresh();
+            Yii::$app->session->setFlash('success', 'Capital allowance added successfully. Written down value updated to ' .
+                Yii::$app->formatter->asCurrency($asset->current_written_down_value, 'LKR'));
         } else {
             $errors = $allowance ? implode(', ', $allowance->getFirstErrors()) : 'Unknown error';
             Yii::$app->session->setFlash('error', 'Failed to add capital allowance: ' . $errors);
@@ -163,9 +160,8 @@ class CapitalAssetController extends BaseController
             $allowance->save(false);
         }
 
-        // Update asset's current written down value
-        $asset->current_written_down_value = $currentWDV;
-        $asset->save(false);
+        // Derive the asset's written-down value from the (renumbered) allowance rows
+        $asset->syncWrittenDownValue();
     }
 
 

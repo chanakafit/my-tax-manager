@@ -205,6 +205,12 @@ docker exec mb-php php /var/www/html/yii finance/recalculate        # all years
 docker exec mb-php php /var/www/html/yii finance/recalculate 2025   # 2025/2026 only
 ```
 
+**Console command** - repair any capital asset whose written-down value has drifted from the allowances claimed against it (the value is otherwise kept in step automatically whenever an allowance is added or removed). Only drifted rows are rewritten:
+
+```bash
+docker exec mb-php php /var/www/html/yii finance/resync-asset-wdv
+```
+
 ---
 
 ## 🛠 Technology Stack
