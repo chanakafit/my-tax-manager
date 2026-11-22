@@ -79,6 +79,9 @@ because they hold real financial data.
   (`APP_ENV=dev`).
 - The DB lives in the named volume `finlocal_db`; `dev.sh down` keeps it,
   `dev.sh nuke` deletes it.
+- Testing: `./local/dev.sh test` runs Codeception unit tests against a dedicated
+  `mybs_test` database (auto-created and migrated), keeping application
+  data in `mybs` safe from fixture truncation.
 - This is separate from `docker-compose.yml` (the old `mb-*` local stack) and
   from `docker-compose.prod.yml` / `deploy/` (the `fin.chanakalk.com` server).
 - To import a production dump:

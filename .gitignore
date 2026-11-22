@@ -1,5 +1,6 @@
 # phpstorm project files
 .idea
+.claude/
 
 # logs
 logs

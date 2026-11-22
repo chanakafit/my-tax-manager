@@ -58,65 +58,70 @@ This project has been **heavily developed using Generative AI technologies**. Wh
 ### Prerequisites
 - Docker Desktop (4GB+ RAM recommended)
 - Git
-- Ports 80, 3307, 8080 available
+- Ports 8090, 8091, 3307 available (overridable in `.env.local`)
 
-### Installation (Linux/macOS)
+### Installation (Linux/macOS/WSL)
 
 ```bash
 # 1. Clone repository
 git clone <repository-url>
 cd my-tax-manager
 
-# 2. Run setup script
-chmod +x setup_linux_local.sh
-./setup_linux_local.sh
+# 2. Run local development script
+./local/dev.sh up
 ```
 
-**The setup script automatically:**
-- ✅ Creates environment configuration files
-- ✅ Builds Docker images with all PHP extensions (including ext-zip)
-- ✅ Starts all containers (nginx, PHP, MariaDB, Redis, phpMyAdmin)
+**The development script automatically:**
+- ✅ Creates `.env.local` from `.env.local.example` (if missing)
+- ✅ Builds Docker images with all required PHP extensions (including `ext-zip`)
+- ✅ Starts isolated containers (`finlocal-nginx`, `finlocal-php`, `finlocal-mariadb`, `finlocal-redis`, `finlocal-phpmyadmin`)
 - ✅ Waits for MariaDB to be ready
-- ✅ Creates database 'mybs'
-- ✅ Runs 36+ database migrations
-- ✅ Creates default admin user
+- ✅ Installs Composer dependencies and runs database migrations
+- ✅ Creates the default admin user
+
+*(Note: The legacy `setup_linux_local.sh` / `docker-compose.yml` stack on port 80 is superseded by `docker-compose.local.yml` to prevent port conflicts with other local stacks).*
 
 ### First Login
 
 ```
-URL: http://localhost
+URL: http://fin.localhost:8090  (or http://localhost:8090)
 Username: admin
-Email: admin@example.com
+Email: admin@fin.local
 Password: admin123
 
 ⚠️ Change password immediately after first login!
 ```
 
+Chrome and Edge resolve `*.localhost` automatically. For a custom `fin.local` hostname, add `127.0.0.1 fin.local` to your hosts file.
+
 ### Monitor Startup
 ```bash
-# Watch container logs (first run takes 2-3 minutes)
-docker logs -f mb-php
+# Watch PHP container logs
+./local/dev.sh logs php
 ```
 
 ---
 
 ## 🐳 Docker Services
 
+The local stack runs isolated under project name `fin-local` with host ports bound strictly to `127.0.0.1`:
+
 | Service | Container | Port | URL |
 |---------|-----------|------|-----|
-| Nginx | mb-nginx | 80 | http://localhost |
-| PHP-FPM | mb-php | 9000 | - |
-| MariaDB | mb-mariadb | 3307 | localhost:3307 |
-| Redis | mb-redis | 6379 | localhost:6379 |
-| phpMyAdmin | mb-phpmyadmin | 8080 | http://localhost:8080 |
+| Nginx | `finlocal-nginx` | 8090 | http://fin.localhost:8090 |
+| PHP-FPM | `finlocal-php` | 9000 (internal) | - |
+| MariaDB | `finlocal-mariadb` | 3307 | `127.0.0.1:3307` |
+| Redis | `finlocal-redis` | 6379 (internal) | - |
+| phpMyAdmin | `finlocal-phpmyadmin` | 8091 | http://localhost:8091 |
 
-**Common Commands:**
+**Everyday Management:**
 ```bash
-docker compose -p mb ps                    # View status
-docker logs -f mb-php                      # View logs
-docker compose -p mb restart php           # Restart
-docker compose -p mb down                  # Stop all
-docker compose -p mb up -d                 # Start all
+./local/dev.sh ps                    # View container status
+./local/dev.sh logs [service]        # View logs (e.g., ./local/dev.sh logs php)
+./local/dev.sh restart               # Restart PHP and Nginx
+./local/dev.sh down                  # Stop all containers (preserves DB volume)
+./local/dev.sh up                    # Start stack
+./local/dev.sh nuke                  # Reset DB volume and reinitialize
 ```
 
 ---
@@ -230,19 +235,20 @@ docker exec mb-php php /var/www/html/yii finance/resync-asset-wdv
 
 ## 💻 Common Commands
 
+Use `./local/dev.sh <command>` (which wraps `docker compose -f docker-compose.local.yml --env-file .env.local -p fin-local`):
+
 ```bash
-# Application
-docker compose -p mb exec php php yii cache/flush-all                # Clear cache
-docker compose -p mb exec php php yii migrate/up --interactive=0     # Run migrations
-docker compose -p mb exec php bash                                   # Access shell
+# Application & Database
+./local/dev.sh migrate               # Run migrations (php yii migrate/up)
+./local/dev.sh seed                  # Seed demo data (php yii seed/index)
+./local/dev.sh seed seed/customers   # Run specific seeder
+./local/dev.sh shell                 # Access PHP container bash shell
+./local/dev.sh mysql                 # Access MariaDB client in container
+./local/dev.sh reset-admin           # Reset local 'admin' password to admin123
 
-# Composer
-docker compose -p mb exec php composer install                       # Install dependencies
-docker compose -p mb exec php composer dump-autoload                 # Rebuild autoload
-
-# Debugging
-docker compose -p mb logs php -f                                     # View logs
-docker compose -p mb ps                                              # Container status
+# Production Data Sync
+./local/dev.sh pull-db                 # Dump production over SSH and import locally
+./local/dev.sh import db-dumps/x.sql   # Import a local .sql[.gz] dump
 ```
 
 ---
@@ -252,7 +258,7 @@ docker compose -p mb ps                                              # Container
 **Implemented:**
 - Environment variables for credentials
 - File upload validation (type/size limits)
-- Authentication & RBAC
+- Authentication & Single-Tenant Access Control (requires authenticated session via `BaseController`; note: single-tenant architecture without granular RBAC)
 - Session management via Redis
 - Password hashing (bcrypt)
 - CSRF protection
@@ -306,16 +312,20 @@ public function testSomething()
 
 **Run Tests:**
 ```bash
-# All tests
-docker compose -p mb exec php php vendor/bin/codecept run unit
+# All tests (auto-provisions and migrates the isolated mybs_test database)
+./local/dev.sh test
 
-# Specific test
-docker compose -p mb exec php php vendor/bin/codecept run unit models/ExpenseTest
+# Specific test file or method
+./local/dev.sh test models/ExpenseTest
+./local/dev.sh test models/ExpenseTest:testValidation
 
-# With coverage
-docker compose -p mb exec php php vendor/bin/codecept run unit --coverage --coverage-html
+# With HTML coverage report
+./local/dev.sh test --coverage --coverage-html
 # View: php/tests/_output/coverage/index.html
 ```
+
+> [!NOTE]
+> Tests execute against an isolated test database (`mybs_test`, defined in `php/config/test_db.php` and overridable via `MYSQL_TEST_DATABASE`). `./local/dev.sh test` automatically creates and migrates `mybs_test`, preventing test fixtures from truncating development data in `mybs`.
 
 For detailed guides, see:
 - **[php/tests/TESTING.md](php/tests/TESTING.md)** - Complete testing guide
@@ -323,20 +333,45 @@ For detailed guides, see:
 
 ---
 
+## 🗄️ Database Upgrade Roadmap
+
+The repository pins MariaDB to `10.2` in `docker-compose.local.yml` and `docker-compose.prod.yml` for stability with historical database dumps. Since MariaDB 10.2 reached End-of-Life (EOL) in May 2022, an upgrade to MariaDB 10.6 LTS or 10.11 LTS is planned.
+
+### Safe Migration Procedure
+1. **Create full database dump**:
+   ```bash
+   ./local/dev.sh pull-db # or mysqldump from production/local
+   ```
+2. **Update image version**:
+   Update `image: mariadb:10.2` to `image: mariadb:10.11` in compose files.
+3. **Re-initialize volume with fresh data directory**:
+   Because InnoDB physical storage formats can be incompatible across major multi-version leaps without step-by-step upgrades, recreate the volume cleanly:
+   ```bash
+   ./local/dev.sh nuke
+   ./local/dev.sh up
+   ./local/dev.sh import <latest_dump.sql>
+   ```
+4. **Verify migrations and unit tests**:
+   ```bash
+   ./local/dev.sh migrate
+   ./local/dev.sh test
+   ```
+
+---
 
 ## 🐛 Troubleshooting
 
+**Port conflict check:**
 ```bash
-lsof -i :80  # Find what's using port 80
+# Verify port availability (default local stack uses 8090, 8091, 3307)
+netstat -ano | findstr :8090
 ```
 
 **Database issues:**
 ```bash
-# Reset database
-docker compose -p mb down
-rm -rf local/mariadb/*
-docker compose -p mb up -d
-docker exec mb-php ./yii migrate/up --interactive=0
+# Reset database volume and start fresh
+./local/dev.sh nuke
+./local/dev.sh up
 ```
 
 **Permission errors:**
@@ -346,8 +381,7 @@ chmod -R 777 php/runtime php/web/assets php/web/uploads
 
 **Clear cache:**
 ```bash
-docker exec mb-php php yii cache/flush-all
-rm -rf php/runtime/cache/* php/web/assets/*
+docker compose -f docker-compose.local.yml -p fin-local exec php php yii cache/flush-all
 ```
 
 ---

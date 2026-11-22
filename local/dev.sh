@@ -19,6 +19,7 @@ COMPOSE="docker compose -f docker-compose.local.yml --env-file .env.local -p fin
 envget() { grep -E "^$1=" .env.local 2>/dev/null | head -1 | cut -d= -f2- | sed 's/[[:space:]#].*//'; }
 APP_PORT="$(envget HTTP_PORT)"; APP_PORT="${APP_PORT:-8090}"
 PMA_PORT="$(envget PMA_PORT)"; PMA_PORT="${PMA_PORT:-8091}"
+TEST_DB="$(envget MYSQL_TEST_DATABASE)"; TEST_DB="${TEST_DB:-mybs_test}"
 APP_URL="http://fin.localhost:${APP_PORT}"
 
 need_env() {
@@ -86,7 +87,12 @@ case "$cmd" in
     shell)    $COMPOSE exec -w /var/www/html php bash ;;
     mysql)    $COMPOSE exec mariadb mysql -uroot -proot "${1:-mybs}" ;;
     logs)     $COMPOSE logs -f "${@:-php nginx}" ;;
-    test)     $COMPOSE exec -w /var/www/html php ./vendor/bin/codecept run unit "$@" ;;
+    test)
+        $COMPOSE exec -T mariadb mysql -uroot -proot \
+            -e "CREATE DATABASE IF NOT EXISTS \`$TEST_DB\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;" >/dev/null 2>&1 || true
+        $COMPOSE exec -T -e MYSQL_DATABASE="$TEST_DB" -w /var/www/html php php yii migrate/up --interactive=0 >/dev/null 2>&1 || true
+        $COMPOSE exec -w /var/www/html php ./vendor/bin/codecept run unit "$@"
+        ;;
     ps)       $COMPOSE ps ;;
 
     import)   # import a .sql / .sql.gz dump, replacing the local DB

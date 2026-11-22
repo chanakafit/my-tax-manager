@@ -72,7 +72,7 @@ $DC exec -w /var/www/html php ./vendor/bin/codecept build
 
 Tests use `Codeception\Test\Unit` with `verify($x)->true()` assertions (not `$this->assertTrue`), the `Yii2` module (`orm`, `email`, `fixtures` parts), and `ActiveFixture` classes in `php/tests/fixtures/` with data in `php/tests/fixtures/data/`. Config is `php/config/test.php` + `php/config/test_db.php`.
 
-**Warning:** `test_db.php` points at the same database as the running app (`db.php` with the dsn host forced to `mariadb`). DB-backed tests truncate/reload fixture tables there — fine on the local `finlocal_db` volume, never run them against a database with real data.
+`test_db.php` points to an isolated test database (`mybs_test` by default, overridable via `MYSQL_TEST_DATABASE`), keeping local development data in `mybs` safe from fixture truncation. `./local/dev.sh test` automatically ensures `mybs_test` exists and has migrations applied before running tests. Never run tests against an environment configured with a production database.
 
 There is no linter configured. `.github/copilot-instructions.md` asks for PSR-12 and `declare(strict_types=1)`, but the existing code does **not** follow either — match the file you are editing, not the doc.
 
